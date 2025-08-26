@@ -461,10 +461,6 @@
         All rights reserved.
         Powered by <a href="https://CtrlPanel.gg"><b>CtrlPanel</b></a> &copy; 2021-{{ date('Y') }}.
 
-        @if (!str_contains(config('BRANCHNAME'), 'main') && !str_contains(config('BRANCHNAME'), 'unknown'))
-            Version <b>{{ config('app')['version'] }} - {{ config('BRANCHNAME') }}</b>
-        @endif
-
         {{-- Show imprint and privacy link --}}
         <div class="float-right d-none d-sm-inline-block">
             @if ($website_settings->show_imprint)
