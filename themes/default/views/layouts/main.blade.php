@@ -457,10 +457,10 @@
     </div>
     <!-- /.content-wrapper -->
     <footer class="main-footer">
-        <strong>Copyright &copy; 2021-{{ date('Y') }} <a
-                    href="{{ url('/') }}">{{ config('app.name', "Ctrlpanel.gg") }}</a>.</strong>
-        All rights
-        reserved. Powered by <a href="https://CtrlPanel.gg">CtrlPanel</a>.
+        Copyright &copy; {{ date('Y') }} <a href="{{ url('/') }}"><b>{{ config('app.name', "Ctrlpanel.gg") }}</b></a>.
+        All rights reserved.
+        Powered by <a href="https://CtrlPanel.gg"><b>CtrlPanel</b></a> &copy; 2021-{{ date('Y') }}.
+
         @if (!str_contains(config('BRANCHNAME'), 'main') && !str_contains(config('BRANCHNAME'), 'unknown'))
             Version <b>{{ config('app')['version'] }} - {{ config('BRANCHNAME') }}</b>
         @endif
