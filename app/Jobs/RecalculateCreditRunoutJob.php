@@ -8,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Facades\DB;
 
 class RecalculateCreditRunoutJob implements ShouldQueue, ShouldBeUnique
 {
@@ -49,16 +50,21 @@ class RecalculateCreditRunoutJob implements ShouldQueue, ShouldBeUnique
         $user->refresh();
 
         try {
-            $runoutAt = $creditService->calculateCreditRunout($user);
+            $result = $creditService->calculateCreditRunout($user);
+            $runoutAt = $result['runoutAt'];
+            $capped = $result['capped'];
         } catch (\Throwable $exception) {
             $runoutAt = null;
+            $capped = false;
         }
 
-        // Update user with projection result
-        $user->update([
-            'credit_runout_at' => $runoutAt,
-            'credit_runout_updated_at' => now(),
-        ]);
+        DB::transaction(function () use ($user, $runoutAt, $capped) {
+            $user->update([
+                'credit_runout_at' => $runoutAt,
+                'credit_runout_capped' => $capped,
+                'credit_runout_updated_at' => now(),
+            ]);
+        });
     }
 }
 

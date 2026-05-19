@@ -39,13 +39,16 @@ class CreditService
      * This mirrors the ChargeServers cron behavior (calendar-aware periods, per-server charges).
      *
      * @param  User $user
-     * @return Carbon|null - Estimated runout timestamp, or null if no active billing
+     * @return array{runoutAt: ?Carbon, capped: bool}
      */
-    public function calculateCreditRunout(User $user): ?Carbon
+    public function calculateCreditRunout(User $user): array
     {
-        $servers = $user->getServersWithProduct();
+        $servers = $user->servers()
+            ->whereNull('suspended')
+            ->with('product')
+            ->get();
         if ($servers->isEmpty()) {
-            return null;
+            return ['runoutAt' => null, 'capped' => false];
         }
 
         $hasPositivePrice = $servers->contains(function ($server) {
@@ -53,10 +56,11 @@ class CreditService
         });
 
         if (!$hasPositivePrice) {
-            return null;
+            return ['runoutAt' => null, 'capped' => false];
         }
 
         $now = now();
+        $projectionLimit = $now->copy()->addYears(2);
         $serverStates = [];
 
         foreach ($servers as $server) {
@@ -86,11 +90,11 @@ class CreditService
         }
 
         if (empty($serverStates)) {
-            return null;
+            return ['runoutAt' => null, 'capped' => false];
         }
 
         $currentCredits = $user->credits;
-        $maxIterations = 100000;
+        $maxIterations = 25000;
         $iterations = 0;
 
         while ($iterations < $maxIterations) {
@@ -100,6 +104,10 @@ class CreditService
                 if ($state['nextBilling']->lt($minDate)) {
                     $minDate = $state['nextBilling'];
                 }
+            }
+
+            if ($minDate->gte($projectionLimit)) {
+                return ['runoutAt' => $projectionLimit, 'capped' => true];
             }
 
             $dueServers = array_filter($serverStates, fn($s) => $s['nextBilling']->equalTo($minDate));
@@ -113,7 +121,7 @@ class CreditService
 
             foreach ($dueServers as $s) {
                 if ($s['price'] > 0 && $currentCredits < $s['price']) {
-                    return $minDate->greaterThan($now) ? $minDate : $now;
+                    return ['runoutAt' => $minDate->greaterThan($now) ? $minDate : $now, 'capped' => false];
                 }
 
                 if ($s['price'] > 0) {

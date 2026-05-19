@@ -73,6 +73,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'referral_code',
         'email_verified_reward',
         'credit_runout_at',
+        'credit_runout_capped',
         'credit_runout_updated_at',
     ];
 
@@ -97,6 +98,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'server_limit' => 'integer',
         'email_verified_reward' => 'boolean',
         'credit_runout_at' => 'datetime',
+        'credit_runout_capped' => 'boolean',
         'credit_runout_updated_at' => 'datetime',
     ];
 
