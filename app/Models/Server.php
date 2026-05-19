@@ -82,9 +82,9 @@ class Server extends Model
         'billing_priority' => BillingPriority::class
     ];
 
-    public function __construct()
+    public function __construct(array $attributes = [])
     {
-        parent::__construct();
+        parent::__construct($attributes);
 
         $ptero_settings = new PterodactylSettings();
         $this->pterodactyl = new PterodactylClient($ptero_settings);
@@ -95,9 +95,23 @@ class Server extends Model
         parent::boot();
 
         static::creating(function (Server $server) {
-            $client = new Client();
+            if (!$server->{$server->getKeyName()}) {
+                $client = new Client();
 
-            $server->{$server->getKeyName()} = $client->generateId($size = 21);
+                $server->{$server->getKeyName()} = $client->generateId($size = 21);
+            }
+        });
+
+        static::created(function (Server $server) {
+            // Recalculate credit runout when server is created
+            \App\Jobs\RecalculateCreditRunoutJob::dispatch($server->user_id);
+        });
+
+        static::updated(function (Server $server) {
+            // Recalculate if product_id or billing_period-affecting fields changed
+            if ($server->wasChanged(['product_id', 'suspended', 'canceled'])) {
+                \App\Jobs\RecalculateCreditRunoutJob::dispatch($server->user_id);
+            }
         });
 
         static::deleting(function (Server $server) {
@@ -108,6 +122,11 @@ class Server extends Model
                     throw new Exception($response['errors'][0]['code']);
                 }
             }
+        });
+
+        static::deleted(function (Server $server) {
+            // Recalculate credit runout when server is deleted
+            \App\Jobs\RecalculateCreditRunoutJob::dispatch($server->user_id);
         });
     }
 
