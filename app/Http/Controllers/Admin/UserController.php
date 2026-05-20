@@ -215,12 +215,23 @@ class UserController extends Controller
 
         $data = $request->validate([
             'name' => 'required|string|min:4|max:30',
-            'pterodactyl_id' => "required|numeric|unique:users,pterodactyl_id,{$user->id}",
             'email' => 'required|string|email',
             'credits' => 'required|numeric|min:0|max:9223372036854775',
             'server_limit' => 'required|numeric|min:0|max:1000000',
             'referral_code' => "required|string|min:2|max:32|unique:users,referral_code,{$user->id}",
         ]);
+
+        if ($request->filled('pterodactyl_id')) {
+            $pterodactylIdRules = ['required', 'numeric'];
+
+            if ((string) $request->input('pterodactyl_id') !== (string) $user->pterodactyl_id) {
+                $pterodactylIdRules[] = Rule::unique('users', 'pterodactyl_id')->ignore($user->getKey());
+            }
+
+            $request->validate([
+                'pterodactyl_id' => $pterodactylIdRules,
+            ]);
+        }
 
         //update roles
         if ($request->roles && $this->can(self::CHANGE_ROLE_PERMISSION)) {
