@@ -8,15 +8,18 @@ use App\Settings\GeneralSettings;
 use App\Settings\WebsiteSettings;
 use App\Settings\ReferralSettings;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
-
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 class HomeController extends Controller
 {
     const TIME_LEFT_BG_SUCCESS = 'bg-success';
+
     const TIME_LEFT_BG_WARNING = 'bg-warning';
+
     const TIME_LEFT_BG_DANGER = 'bg-danger';
 
     public function __construct()
@@ -24,178 +27,110 @@ class HomeController extends Controller
         $this->middleware('auth');
     }
 
-    /**
-     * Calculate when user will run out of credits. Holy shit what have i done? for just 1 fucking box on the dashboard?
-     */
-    protected function calculateCreditRunout($user, $credits)
+    /*
+    * TODO: This is commented due to the fact the market is a bad dependency, will be changed later.
+    public function callHome()
     {
-        $servers = $user->getServersWithProduct();
-        if ($servers->isEmpty()) {
-            return [
-                'run_out_date' => null,
-                'simulation_steps' => []
-            ];
+        if (Storage::exists('callHome')) {
+            return;
+        }
+        Http::asForm()->post('https://market.CtrlPanel.gg/callhome.php', [
+            'id' => Hash::make(URL::current()),
+        ]);
+        Storage::put('callHome', 'This is only used to count the installations of cpgg.');
+    }*/
+
+    /**
+     * @description Get the Background Color for the Days-Left-Box in HomeView
+     *
+     * @param  float  $daysLeft
+     * @return string
+     */
+    public function getTimeLeftBoxBackground(float $daysLeft): string
+    {
+        if ($daysLeft >= 15) {
+            return $this::TIME_LEFT_BG_SUCCESS;
+        }
+        if ($daysLeft <= 7) {
+            return $this::TIME_LEFT_BG_DANGER;
         }
 
-        // Prepare all servers: get next billing date and price (in credits)
-        $serverStates = [];
-        foreach ($servers as $server) {
-            $product = $server->product;
-            $period = $product->billing_period;
-            $price = $product->price;
-            $lastBilled = $server->last_billed ? Carbon::parse($server->last_billed) : now();
-            $nextBilling = $lastBilled->copy();
-            while ($nextBilling->lessThanOrEqualTo(now())) {
-                switch ($period) {
-                    case 'hourly': $nextBilling->addHour(); break;
-                    case 'daily': $nextBilling->addDay(); break;
-                    case 'weekly': $nextBilling->addWeek(); break;
-                    case 'monthly': $nextBilling->addMonth(); break;
-                    case 'quarterly': $nextBilling->addMonths(3); break;
-                    case 'half-annually': $nextBilling->addMonths(6); break;
-                    case 'annually': $nextBilling->addYear(); break;
-                }
-            }
-            $serverStates[] = [
-                'server' => $server,
-                'product' => $product,
-                'period' => $period,
-                'price' => $price,
-                'nextBilling' => $nextBilling
-            ];
-        }
-
-        $simulationSteps = [];
-        $currentCredits = $credits;
-        $runOutDate = null;
-        $maxSteps = 1000; // max steps to generate events. Good accuracy for most cases, prevents infinite loops.
-        $step = 0;
-
-        while ($step < $maxSteps) {
-            // Find the next billing date among all servers
-            $nextDates = array_map(fn($s) => $s['nextBilling'], $serverStates);
-            $minDate = collect($nextDates)->min();
-            // Find all servers that bill at this date
-            $dueServers = array_filter($serverStates, fn($s) => $s['nextBilling']->equalTo($minDate));
-            $sum = 0;
-            $actions = [];
-            foreach ($dueServers as $idx => $s) {
-                $sum += $s['price'];
-                $actions[] = $s['product']->name . ' (' . $s['period'] . ')';
-            }
-            if ($currentCredits < $sum) {
-                $runOutDate = $minDate;
-                break;
-            }
-            $currentCredits -= $sum;
-            $simulationSteps[] = [
-                'date' => $minDate->format('Y-m-d H:i:s'),
-                'action' => implode(' + ', $actions),
-                'amount' => -$sum,
-                'remaining' => $currentCredits,
-                'details' => ''
-            ];
-            // Advance nextBilling for all due servers
-            foreach ($serverStates as &$s) {
-                if ($s['nextBilling']->equalTo($minDate)) {
-                    switch ($s['period']) {
-                        case 'hourly': $s['nextBilling']->addHour(); break;
-                        case 'daily': $s['nextBilling']->addDay(); break;
-                        case 'weekly': $s['nextBilling']->addWeek(); break;
-                        case 'monthly': $s['nextBilling']->addMonth(); break;
-                        case 'quarterly': $s['nextBilling']->addMonths(3); break;
-                        case 'half-annually': $s['nextBilling']->addMonths(6); break;
-                        case 'annually': $s['nextBilling']->addYear(); break;
-                    }
-                }
-            }
-            unset($s);
-            $step++;
-        }
-        if ($runOutDate === null && count($simulationSteps) > 0) {
-            $runOutDate = Carbon::parse($simulationSteps[count($simulationSteps)-1]['date']);
-        }
-        return [
-            'run_out_date' => $runOutDate,
-            'simulation_steps' => $simulationSteps
-        ];
+        return $this::TIME_LEFT_BG_WARNING;
     }
 
     /**
-     * Format time left for display
+     * @description Set "hours", "days" or nothing behind the remaining time
+     *
+     * @param  float  $daysLeft
+     * @param  float  $hoursLeft
+     * @return string|void
      */
-    protected function formatTimeLeft($date)
+    public function getTimeLeftBoxUnit(float $daysLeft, float $hoursLeft)
     {
-        if (!$date) return null;
-
-        $now = now();
-        $daysLeft = $now->diffInDays($date, false);
-        $hoursLeft = $now->diffInHours($date, false);
-        $minutesLeft = $now->diffInMinutes($date, false);
-
         if ($daysLeft > 1) {
-            return [
-                'value' => floor($daysLeft),
-                'unit' => 'days',
-                'bg' => $daysLeft >= 15 ? self::TIME_LEFT_BG_SUCCESS :
-                    ($daysLeft <= 7 ? self::TIME_LEFT_BG_DANGER : self::TIME_LEFT_BG_WARNING)
-            ];
+            return __('days');
         }
 
-        if ($hoursLeft > 1) {
-            return [
-                'value' => floor($hoursLeft),
-                'unit' => 'hours',
-                'bg' => $hoursLeft <= 24 ? self::TIME_LEFT_BG_DANGER : self::TIME_LEFT_BG_WARNING
-            ];
-        }
-
-        if ($minutesLeft > 1) {
-            return [
-                'value' => floor($minutesLeft),
-                'unit' => 'minutes',
-                'bg' => self::TIME_LEFT_BG_DANGER
-            ];
-        }
-
-        return [
-            'value' => 'Less than 1',
-            'unit' => 'minute',
-            'bg' => self::TIME_LEFT_BG_DANGER
-        ];
+        return $hoursLeft < 1 ? null : __('hours');
     }
 
     /**
-     * Show the application dashboard
+     * @description Get the Text for the Days-Left-Box in HomeView
+     *
+     * @param  float  $daysLeft
+     * @param  float  $hoursLeft
+     * @return string
      */
+    public function getTimeLeftBoxText(float $daysLeft, float $hoursLeft)
+    {
+        if ($daysLeft > 1) {
+            return strval(number_format($daysLeft, 0));
+        }
+
+        return $hoursLeft < 1 ? __('You ran out of Credits') : strval($hoursLeft);
+    }
+
+    /** Show the application dashboard. */
     public function index(GeneralSettings $general_settings, WebsiteSettings $website_settings, ReferralSettings $referral_settings)
     {
-        $user = Auth::user();
-        $credits = $user->credits;
+        $usage = Auth::user()->creditUsage();
+        $credits = Auth::user()->credits;
+        $bg = '';
+        $boxText = '';
+        $unit = '';
         $timeLeft = null;
 
-        if ($credits > 0) {
-            $cacheKey = 'user_credits_left:' . $user->id;
-            $calculation = Cache::remember($cacheKey, now()->addMinutes(5), function() use ($user, $credits) {
-                return $this->calculateCreditRunout($user, $credits);
-            });
+        /** Build our Time-Left-Box */
+        if ($credits > 10 && $usage > 0) {
+            $daysLeft = $credits / ($usage / 30);
+            $hoursLeft = $credits / ($usage / 30 / 24);
 
-            if ($calculation['run_out_date']) {
-                $timeLeft = $this->formatTimeLeft($calculation['run_out_date']);
-                $timeLeft['message'] = 'Estimated run out: ' . $calculation['run_out_date']->format('d.m.Y H:i');
+            $bg = $this->getTimeLeftBoxBackground($daysLeft);
+            $boxText = $this->getTimeLeftBoxText($daysLeft, $hoursLeft);
+            $unit = $this->getTimeLeftBoxUnit($daysLeft, $hoursLeft);
 
-                // For debugging
-                // $timeLeft['simulation'] = $calculation['simulation_steps'];
-            }
+            $timeLeft = [
+                'bg' => $bg,
+                'message' => __('Estimated run out: :value :unit', ['value' => $boxText, 'unit' => $unit ?? '']),
+                'value' => $boxText,
+                'unit' => $unit
+            ];
         }
+
+        //$this->callhome(); TODO: Same as the function
+
+        // RETURN ALL VALUES
         return view('home')->with([
-            'usage' => $user->creditUsage(),
+            'usage' => $usage,
             'credits' => $credits,
             'useful_links_dashboard' => UsefulLink::where("position","like","%dashboard%")->get()->sortby("id"),
-            'timeLeft' => $timeLeft,
-            'numberOfReferrals' => DB::table('user_referrals')->where('referral_id', '=', $user->id)->count(),
-            'partnerDiscount' => PartnerDiscount::where('user_id', $user->id)->first(),
+            'bg' => $bg,
+            'boxText' => $boxText,
+            'unit' => $unit,
+            'numberOfReferrals' => DB::table('user_referrals')->where('referral_id', '=', Auth::user()->id)->count(),
+            'partnerDiscount' => PartnerDiscount::where('user_id', Auth::user()->id)->first(),
             'myDiscount' => PartnerDiscount::getDiscount(),
+            'timeLeft' => $timeLeft,
             'general_settings' => $general_settings,
             'website_settings' => $website_settings,
             'referral_settings' => $referral_settings
