@@ -49,24 +49,9 @@ class Product extends Model
         parent::boot();
 
         static::creating(function (Product $product) {
-            if (!$product->{$product->getKeyName()}) {
-                $client = new Client();
+            $client = new Client();
 
-                $product->{$product->getKeyName()} = $client->generateId($size = 21);
-            }
-        });
-
-        static::updated(function (Product $product) {
-            // When product pricing or billing period changes, recalculate for all affected users
-            if ($product->wasChanged(['price', 'billing_period'])) {
-                $userIds = \App\Models\Server::where('product_id', $product->id)
-                    ->distinct()
-                    ->pluck('user_id');
-
-                foreach ($userIds as $userId) {
-                    \App\Jobs\RecalculateCreditRunoutJob::dispatch($userId);
-                }
-            }
+            $product->{$product->getKeyName()} = $client->generateId($size = 21);
         });
 
         static::deleting(function (Product $product) {
