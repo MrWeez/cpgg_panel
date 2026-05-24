@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
+use Carbon\Carbon;
 
 class HomeController extends Controller
 {
@@ -96,15 +97,21 @@ class HomeController extends Controller
             $boxText = $this->getTimeLeftBoxText($daysLeft, $hoursLeft);
             $unit = $this->getTimeLeftBoxUnit($daysLeft, $hoursLeft);
 
+            if ($daysLeft > 1) {
+                $estimatedDate = Carbon::now()->addDays((int) ceil($daysLeft));
+            } else {
+                $estimatedDate = Carbon::now()->addHours((int) ceil($hoursLeft));
+            }
+
             $timeLeft = [
                 'bg' => $bg,
-                'message' => __('Estimated run out: :value :unit', ['value' => $boxText, 'unit' => $unit ?? '']),
+                'message' => __('Estimated run out: :date', ['date' => $estimatedDate->format('d-m-Y H:i')]),
+                'date' => $estimatedDate->toDateString(),
                 'value' => $boxText,
                 'unit' => $unit
             ];
         }
 
-        //$this->callhome(); TODO: Same as the function
 
         // RETURN ALL VALUES
         return view('home')->with([
