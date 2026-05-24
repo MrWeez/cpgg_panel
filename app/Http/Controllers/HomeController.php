@@ -18,9 +18,7 @@ use Carbon\Carbon;
 class HomeController extends Controller
 {
     const TIME_LEFT_BG_SUCCESS = 'bg-success';
-
     const TIME_LEFT_BG_WARNING = 'bg-warning';
-
     const TIME_LEFT_BG_DANGER = 'bg-danger';
 
     public function __construct()
