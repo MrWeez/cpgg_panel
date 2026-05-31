@@ -45,7 +45,7 @@ class HomeController extends Controller
     }
 
     /**
-     * @description Set "hours", "days" or nothing behind the remaining time
+     * @description Set unit behind the remaining time (deprecated - units now in value)
      *
      * @param  float  $daysLeft
      * @param  float  $hoursLeft
@@ -53,11 +53,7 @@ class HomeController extends Controller
      */
     public function getTimeLeftBoxUnit(float $daysLeft, float $hoursLeft)
     {
-        if ($daysLeft > 1) {
-            return __('days');
-        }
-
-        return $hoursLeft < 1 ? null : __('hours');
+        return null;
     }
 
     /**
@@ -69,11 +65,21 @@ class HomeController extends Controller
      */
     public function getTimeLeftBoxText(float $daysLeft, float $hoursLeft)
     {
-        if ($daysLeft > 1) {
-            return strval(number_format($daysLeft, 0));
+        if ($hoursLeft < 1) {
+            return __('You ran out of Credits');
         }
 
-        return $hoursLeft < 1 ? __('You ran out of Credits') : strval($hoursLeft);
+        $fullDays = (int) floor($daysLeft);
+        $remainingHours = (int) ceil($hoursLeft - ($fullDays * 24));
+        if ($fullDays > 0 && $remainingHours > 0) {
+            return strval(number_format($fullDays, 0)) . __('d') . ' ' . strval(number_format($remainingHours, 0)) . __('h');
+        }
+
+        if ($fullDays > 0) {
+            return strval(number_format($fullDays, 0)) . __('d');
+        }
+
+        return strval(number_format($hoursLeft, 0)) . __('h');
     }
 
     /** Show the application dashboard. */
