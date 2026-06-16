@@ -221,7 +221,6 @@
 
     <script>
         const handleServerCancel = (serverId) => {
-            // Handle server cancel with sweetalert
             Swal.fire({
                 title: "{{ __('Cancel Server?') }}",
                 text: "{{ __('This will cancel your current server to the next billing period. It will get suspended when the current period runs out.') }}",
@@ -233,14 +232,19 @@
                 reverseButtons: true
             }).then((result) => {
                 if (result.value) {
-                    // Delete server
                     fetch("{{ route('servers.cancel', ['server' => ':serverId']) }}".replace(':serverId', serverId), {
                         method: 'PATCH',
                         headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
                         }
-                    }).then(() => {
-                        window.location.reload();
+                    }).then((response) => {
+                        if (response.ok) {
+                            window.location.reload();
+                        } else {
+                            throw new Error('Server error');
+                        }
                     }).catch((error) => {
                         Swal.fire({
                             title: "{{ __('Error') }}",
@@ -249,7 +253,43 @@
                             confirmButtonColor: '#d9534f',
                         })
                     })
-                    return
+                }
+            })
+        }
+
+        const handleServerUncancel = (serverId) => {
+            Swal.fire({
+                title: "{{ __('Renew Subscription?') }}",
+                text: "{{ __('This will revoke the cancellation and keep your server active.') }}",
+                icon: 'question',
+                confirmButtonColor: '#5cb85c',
+                showCancelButton: true,
+                confirmButtonText: "{{ __('Yes, renew!') }}",
+                cancelButtonText: "{{ __('No, abort!') }}",
+                reverseButtons: true
+            }).then((result) => {
+                if (result.value) {
+                    fetch("{{ route('servers.uncancel', ['server' => ':serverId']) }}".replace(':serverId', serverId), {
+                        method: 'PATCH',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    }).then((response) => {
+                        if (response.ok) {
+                            window.location.reload();
+                        } else {
+                            throw new Error('Server error');
+                        }
+                    }).catch((error) => {
+                        Swal.fire({
+                            title: "{{ __('Error') }}",
+                            text: "{{ __('Something went wrong, please try again later.') }}",
+                            icon: 'error',
+                            confirmButtonColor: '#d9534f',
+                        })
+                    })
                 }
             })
         }
@@ -266,7 +306,6 @@
                 reverseButtons: true
             }).then((result) => {
                 if (result.value) {
-                    // Delete server
                     fetch("{{ route('servers.destroy', ['server' => ':serverId']) }}".replace(':serverId', serverId), {
                         method: 'DELETE',
                         headers: {
@@ -282,10 +321,8 @@
                             confirmButtonColor: '#d9534f',
                         })
                     })
-                    return
                 }
             });
-
         }
 
         document.addEventListener('DOMContentLoaded', () => {
