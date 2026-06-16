@@ -354,7 +354,7 @@ class ServerController extends Controller
         Cache::forget('user_credits_left:' . $server->user_id);
     }
 
-    public function cancel(Server $server): RedirectResponse
+    public function cancel(Server $server): \Illuminate\Http\Response|RedirectResponse
     {
         if ($server->user_id !== Auth::id()) {
             return back()->with('error', __('This is not your Server!'));
@@ -362,11 +362,22 @@ class ServerController extends Controller
 
         try {
             $server->update(['canceled' => now()]);
+
+            if (request()->expectsJson()) {
+                return response()->noContent();
+            }
+
             return redirect()->route('servers.index')
                 ->with('success', __('Server canceled'));
         } catch (Exception $e) {
+            report($e);
+
+            if (request()->expectsJson()) {
+                return response()->json(['error' => __('Server cancellation failed')], 500);
+            }
+
             return redirect()->route('servers.index')
-                ->with('error', __('Server cancellation failed: ') . $e->getMessage());
+                ->with('error', __('Server cancellation failed'));
         }
     }
 
