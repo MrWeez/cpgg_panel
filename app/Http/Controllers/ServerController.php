@@ -396,6 +396,7 @@ class ServerController extends Controller
         $currentEgg = $serverInfo['egg'];
 
         //$currentProductEggs = $currentProduct->eggs->pluck('id')->toArray();
+        $user = Auth::user();
 
         return Product::orderBy('price', 'asc')
             ->with('nodes')->with('eggs')
@@ -406,7 +407,7 @@ class ServerController extends Controller
                 $builder->where('id', $currentEgg);
             })
             ->get()
-            ->map(function ($product) use ($currentProduct, $pteroNode) {
+            ->map(function ($product) use ($currentProduct, $pteroNode, $user) {
                 $product->eggs = $product->eggs->pluck('name')->toArray();
 
                 $memoryDiff = $product->memory - $currentProduct->memory;
@@ -417,6 +418,12 @@ class ServerController extends Controller
 
                 if ($memoryDiff > $maxMemory - $pteroNode['allocated_resources']['memory'] ||
                     $diskDiff > $maxDisk - $pteroNode['allocated_resources']['disk']) {
+                    $product->doesNotFit = true;
+                }
+
+                // Check server limit for the product
+                $productCount = $user->servers()->where("product_id", $product->id)->count();
+                if ($productCount >= $product->serverlimit && $product->serverlimit != 0) {
                     $product->doesNotFit = true;
                 }
 
@@ -446,6 +453,15 @@ class ServerController extends Controller
         if (!$newProduct) {
             return redirect()->route('servers.show', ['server' => $server->id])
                 ->with('error', __('Selected product not found'));
+        }
+
+        // Check server limit for the new product
+        if ($oldProduct->id !== $newProduct->id) {
+            $productCount = $user->servers()->where("product_id", $newProduct->id)->count();
+            if ($productCount >= $newProduct->serverlimit && $newProduct->serverlimit != 0) {
+                return redirect()->route('servers.show', ['server' => $server->id])
+                    ->with('error', __('You can not create any more Servers with this product!'));
+            }
         }
 
         if (!$this->validateUpgrade($server, $oldProduct, $newProduct)) {
@@ -513,6 +529,14 @@ class ServerController extends Controller
         $refundAmount = $this->calculateRefund($server, $oldProduct);
         if ($user->credits < ($newProduct->price - $refundAmount)) {
             return false;
+        }
+
+        // Check server limit for the new product
+        if ($oldProduct->id !== $newProduct->id) {
+            $productCount = $user->servers()->where("product_id", $newProduct->id)->count();
+            if ($productCount >= $newProduct->serverlimit && $newProduct->serverlimit != 0) {
+                return false;
+            }
         }
 
         return true;
