@@ -242,6 +242,42 @@ class PterodactylClient
     }
 
     /**
+     * Check whether a node has reached its allocation limit.
+     *
+     * The allocation limit is a per-node setting: it caps the number of
+     * allocations that may be in use on a single node. When the amount of
+     * assigned allocations on the node meets or exceeds the limit, no new
+     * servers can be deployed to that node (but other nodes in the same
+     * location remain eligible).
+     *
+     * @param  Node  $node
+     * @return bool
+     */
+    public function nodeHasReachedAllocationLimit(Node $node, int $nodeAllocationLimit = null): bool
+    {
+        // A limit of 0 means "no limit", so the node is never blocked.
+        $limit = $nodeAllocationLimit ?? $this->allocation_limit;
+        if ($limit <= 0) {
+            return false;
+        }
+
+        $response = self::getAllocations($node);
+
+        if (!isset($response['data']) || empty($response['data'])) {
+            return false;
+        }
+
+        $usedAllocations = 0;
+        foreach ($response['data'] as $allocation) {
+            if ($allocation['attributes']['assigned']) {
+                $usedAllocations++;
+            }
+        }
+
+        return $usedAllocations >= $limit;
+    }
+
+    /**
      * @param  Node  $node
      * @return array|mixed
      *
@@ -250,7 +286,7 @@ class PterodactylClient
     public function getAllocations(Node $node)
     {
         try {
-            $response = $this->application->get("application/nodes/{$node->id}/allocations?per_page={$this->allocation_limit}");
+            $response = $this->application->get("application/nodes/{$node->id}/allocations?per_page={$this->per_page_limit}");
         } catch (Exception $e) {
             throw self::getException($e->getMessage());
         }
