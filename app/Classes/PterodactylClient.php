@@ -225,7 +225,7 @@ class PterodactylClient
      */
     public function getFreeAllocations(Node $node)
     {
-        $response = self::getAllocations($node);
+        $response = $this->getAllocations($node);
         $freeAllocations = [];
 
         if (isset($response['data'])) {
@@ -253,15 +253,15 @@ class PterodactylClient
      * @param  Node  $node
      * @return bool
      */
-    public function nodeHasReachedAllocationLimit(Node $node, int $nodeAllocationLimit = null): bool
+    public function nodeHasReachedAllocationLimit(Node $node): bool
     {
         // A limit of 0 means "no limit", so the node is never blocked.
-        $limit = $nodeAllocationLimit ?? $this->allocation_limit;
+        $limit = $node->allocation_limit;
         if ($limit <= 0) {
             return false;
         }
 
-        $response = self::getAllocations($node);
+        $response = $this->getAllocations($node);
 
         if (!isset($response['data']) || empty($response['data'])) {
             return false;

@@ -313,12 +313,16 @@ class ServerCreationService
             }
 
             // Check if node has reached its per-node allocation limit.
-            if ($this->pterodactylClient->nodeHasReachedAllocationLimit($node, $node->allocation_limit)) {
+            if ($this->pterodactylClient->nodeHasReachedAllocationLimit($node)) {
                 return true;
             }
 
-            // Check if node has free allocations (IP/port)
-            $freeAllocations = $this->pterodactylClient->getFreeAllocations($node);
+            try {
+                $freeAllocations = $this->pterodactylClient->getFreeAllocations($node);
+            } catch (\Exception $e) {
+                return true;
+            }
+
             return empty($freeAllocations);
         });
 
@@ -342,7 +346,7 @@ class ServerCreationService
             }
 
             // Check if node has reached its per-node allocation limit.
-            return $this->pterodactylClient->nodeHasReachedAllocationLimit($node, $node->allocation_limit);
+            return $this->pterodactylClient->nodeHasReachedAllocationLimit($node);
         });
 
         // Try each available node and return the first one with a free allocation.

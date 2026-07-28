@@ -573,12 +573,16 @@ class ServerController extends Controller
             }
 
             // Check if node has reached its per-node allocation limit.
-            if ($this->pterodactyl->nodeHasReachedAllocationLimit($node, $node->allocation_limit)) {
+            if ($this->pterodactyl->nodeHasReachedAllocationLimit($node)) {
                 return true;
             }
 
-            // Check if node has free allocations (IP/port)
-            $freeAllocations = $this->pterodactyl->getFreeAllocations($node);
+            try {
+                $freeAllocations = $this->pterodactyl->getFreeAllocations($node);
+            } catch (\Exception $e) {
+                return true;
+            }
+
             return empty($freeAllocations);
         });
 
@@ -602,7 +606,7 @@ class ServerController extends Controller
             }
 
             // Check if node has reached its per-node allocation limit.
-            return $this->pterodactyl->nodeHasReachedAllocationLimit($node, $node->allocation_limit);
+            return $this->pterodactyl->nodeHasReachedAllocationLimit($node);
         });
 
         foreach ($availableNodes as $node) {
