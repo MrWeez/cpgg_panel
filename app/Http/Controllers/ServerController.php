@@ -388,6 +388,20 @@ class ServerController extends Controller
         ]);
     }
 
+    /**
+     * Determine whether the user has reached the per-product server limit.
+     */
+    private function productLimitReached(User $user, Product $product): bool
+    {
+        if ($product->serverlimit == 0) {
+            return false;
+        }
+
+        $productCount = $user->servers()->where('product_id', $product->id)->count();
+
+        return $productCount >= $product->serverlimit;
+    }
+
     private function getUpgradeOptions(Server $server, array $serverInfo): \Illuminate\Database\Eloquent\Collection
     {
         $currentProduct = Product::find($server->product_id);
@@ -422,8 +436,7 @@ class ServerController extends Controller
                 }
 
                 // Check server limit for the product
-                $productCount = $user->servers()->where("product_id", $product->id)->count();
-                if ($productCount >= $product->serverlimit && $product->serverlimit != 0) {
+                if ($this->productLimitReached($user, $product)) {
                     $product->doesNotFit = true;
                 }
 
@@ -456,12 +469,9 @@ class ServerController extends Controller
         }
 
         // Check server limit for the new product
-        if ($oldProduct->id !== $newProduct->id) {
-            $productCount = $user->servers()->where("product_id", $newProduct->id)->count();
-            if ($productCount >= $newProduct->serverlimit && $newProduct->serverlimit != 0) {
-                return redirect()->route('servers.show', ['server' => $server->id])
-                    ->with('error', __('You can not create any more Servers with this product!'));
-            }
+        if ($oldProduct->id !== $newProduct->id && $this->productLimitReached($user, $newProduct)) {
+            return redirect()->route('servers.show', ['server' => $server->id])
+                ->with('error', __('You can not create any more Servers with this product!'));
         }
 
         if (!$this->validateUpgrade($server, $oldProduct, $newProduct)) {
@@ -532,11 +542,8 @@ class ServerController extends Controller
         }
 
         // Check server limit for the new product
-        if ($oldProduct->id !== $newProduct->id) {
-            $productCount = $user->servers()->where("product_id", $newProduct->id)->count();
-            if ($productCount >= $newProduct->serverlimit && $newProduct->serverlimit != 0) {
-                return false;
-            }
+        if ($oldProduct->id !== $newProduct->id && $this->productLimitReached($user, $newProduct)) {
+            return false;
         }
 
         return true;
