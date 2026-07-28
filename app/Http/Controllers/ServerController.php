@@ -21,9 +21,10 @@ use App\Enums\BillingPriority;
 use App\Settings\GeneralSettings;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Client\Response;
+use Illuminate\Http\Client\Response as ClientResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -354,7 +355,7 @@ class ServerController extends Controller
         Cache::forget('user_credits_left:' . $server->user_id);
     }
 
-    public function cancel(Server $server): \Illuminate\Http\Response|RedirectResponse
+    public function cancel(Server $server): Response|RedirectResponse
     {
         if ($server->user_id !== Auth::id()) {
             return back()->with('error', __('This is not your Server!'));
@@ -381,10 +382,19 @@ class ServerController extends Controller
         }
     }
 
-    public function uncancel(Server $server): \Illuminate\Http\Response|RedirectResponse
+    public function resume(Server $server): Response|RedirectResponse
     {
         if ($server->user_id !== Auth::id()) {
             return back()->with('error', __('This is not your Server!'));
+        }
+
+        if ($server->canceled === null) {
+            if (request()->expectsJson()) {
+                return response()->json(['error' => __('Server is not canceled')], 422);
+            }
+
+            return redirect()->route('servers.index')
+                ->with('error', __('Server is not canceled'));
         }
 
         try {

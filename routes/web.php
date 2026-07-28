@@ -64,8 +64,8 @@ Route::middleware(['auth', 'checkSuspended'])->group(function () {
     //normal routes
     Route::get('notifications/readAll', [NotificationController::class, 'readAll'])->name('notifications.readAll');
     Route::resource('notifications', NotificationController::class);
-    Route::patch('/servers/cancel/{server}', [ServerController::class, 'cancel'])->name('servers.cancel');
-    Route::patch('/servers/{server}/uncancel', [ServerController::class, 'uncancel'])->name('servers.uncancel');
+    Route::patch('/servers/{server}/cancel', [ServerController::class, 'cancel'])->name('servers.cancel');
+    Route::patch('/servers/{server}/resume', [ServerController::class, 'resume'])->name('servers.resume');
     Route::post('/servers/validateDeploymentVariables', [ServerController::class, 'validateDeploymentVariables'])->name('servers.validateDeploymentVariables');
     Route::patch('/servers/{server}/billing_priority', [ServerController::class, 'updateBillingPriority'])->name('servers.updateBillingPriority');
     Route::delete('/servers/{server}', [ServerController::class, 'destroy'])->name('servers.destroy');

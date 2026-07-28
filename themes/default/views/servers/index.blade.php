@@ -257,7 +257,7 @@
             })
         }
 
-        const handleServerUncancel = (serverId) => {
+        const handleServerResume = (serverId) => {
             Swal.fire({
                 title: "{{ __('Renew Subscription?') }}",
                 text: "{{ __('This will revoke the cancellation and keep your server active.') }}",
@@ -269,7 +269,7 @@
                 reverseButtons: true
             }).then((result) => {
                 if (result.value) {
-                    fetch("{{ route('servers.uncancel', ['server' => ':serverId']) }}".replace(':serverId', serverId), {
+                    fetch("{{ route('servers.resume', ['server' => ':serverId']) }}".replace(':serverId', serverId), {
                         method: 'PATCH',
                         headers: {
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',
