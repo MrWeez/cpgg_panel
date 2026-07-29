@@ -317,11 +317,7 @@ class ServerCreationService
                 return true;
             }
 
-            try {
-                $freeAllocations = $this->pterodactylClient->getFreeAllocations($node);
-            } catch (\Exception $e) {
-                return true;
-            }
+            $freeAllocations = $this->pterodactylClient->getFreeAllocations($node);
 
             return empty($freeAllocations);
         });

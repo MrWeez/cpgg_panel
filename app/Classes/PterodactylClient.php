@@ -220,12 +220,15 @@ class PterodactylClient
     /**
      * @param  Node  $node
      * @return array|mixed|null
-     *
-     * @throws Exception
      */
     public function getFreeAllocations(Node $node)
     {
-        $response = $this->getAllocations($node);
+        try {
+            $response = $this->getAllocations($node);
+        } catch (\Exception $e) {
+            return [];
+        }
+
         $freeAllocations = [];
 
         if (isset($response['data'])) {
@@ -261,7 +264,11 @@ class PterodactylClient
             return false;
         }
 
-        $response = $this->getAllocations($node);
+        try {
+            $response = $this->getAllocations($node);
+        } catch (\Exception $e) {
+            return true;
+        }
 
         if (!isset($response['data']) || empty($response['data'])) {
             return false;

@@ -577,11 +577,7 @@ class ServerController extends Controller
                 return true;
             }
 
-            try {
-                $freeAllocations = $this->pterodactyl->getFreeAllocations($node);
-            } catch (\Exception $e) {
-                return true;
-            }
+            $freeAllocations = $this->pterodactyl->getFreeAllocations($node);
 
             return empty($freeAllocations);
         });
