@@ -64,7 +64,7 @@ abstract class TwoFactorExtension extends AbstractExtension
 
     /**
      * Get the rate limit for a specific action.
-     * 
+     *
      * @param string $action (setup, enable, disable, verify, action)
      * @return array ['attempts' => int, 'minutes' => int]
      */
@@ -78,7 +78,10 @@ abstract class TwoFactorExtension extends AbstractExtension
             'action'  => ['attempts' => 3, 'minutes' => 5], // Default 3 per 5 mins for sensitive actions
         ];
 
-        return $this->getConfig()['rate_limits'][$action] ?? $defaults[$action];
+        $config = static::getConfig();
+        $rateLimits = is_array($config) ? ($config['rate_limits'] ?? []) : [];
+
+        return $rateLimits[$action] ?? $defaults[$action];
     }
 
     /**
