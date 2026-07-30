@@ -24,7 +24,8 @@ class TwoFactorService
             $classes = ExtensionHelper::getAllExtensionClassesByNamespace('TwoFactor');
 
             foreach ($classes as $class) {
-                if (is_subclass_of($class, TwoFactorExtension::class)) {
+                if (is_string($class) && class_exists($class) && is_subclass_of($class, TwoFactorExtension::class)) {
+                    /** @var TwoFactorExtension $extension */
                     $extension = app($class);
                     $this->extensions->put($extension->getSettings('name'), $extension);
                 }
@@ -81,7 +82,7 @@ class TwoFactorService
         }
 
         // If remember_web cookie is present, store verification token in DB
-        $cookieName = Auth::guard('web')->getRecallerName();
+        $cookieName = Auth::getRecallerName();
         if ($request->hasCookie($cookieName)) {
             TwoFactorVerifiedToken::updateOrCreate(
                 [
