@@ -27,12 +27,16 @@ class RecoveryCodeService
      */
     public function verify(User $user, string $code): bool
     {
+        $limit = app(\App\Services\TwoFactor\TwoFactorService::class)
+            ->getExtension('totp')
+            ?->getRateLimit('recovery_code') ?? ['attempts' => 5, 'minutes' => 10];
+
         $cacheKey = "2fa.recovery_attempts.{$user->id}";
         $attempts = Cache::get($cacheKey, 0);
 
-        if ($attempts >= 5) {
+        if ($attempts >= $limit['attempts']) {
             throw ValidationException::withMessages([
-                'code' => [__('Too many recovery code attempts. Please try again in 10 minutes.')],
+                'code' => [__('Too many recovery code attempts. Please try again in :minutes minutes.', ['minutes' => $limit['minutes']])],
             ]);
         }
 
@@ -67,7 +71,7 @@ class RecoveryCodeService
         if ($isVerified) {
             Cache::forget($cacheKey);
         } else {
-            Cache::put($cacheKey, $attempts + 1, now()->addMinutes(10));
+            Cache::put($cacheKey, $attempts + 1, now()->addMinutes($limit['minutes']));
         }
 
         return $isVerified;

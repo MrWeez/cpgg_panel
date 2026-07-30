@@ -219,6 +219,9 @@ class TotpExtension extends TwoFactorExtension
     {
         return [
             'name' => 'TOTP',
+            'rate_limits' => [
+                'recovery_code' => ['attempts' => 5, 'minutes' => 10],
+            ],
         ];
     }
 }
