@@ -9,24 +9,16 @@ use Illuminate\Http\Request;
 
 class DummyExtension extends TwoFactorExtension
 {
-    public function getName(): string
+    public function getSettings(?string $key = null): mixed
     {
-        return 'dummy';
-    }
+        $settings = [
+            'name' => 'dummy',
+            'label' => __('Dummy 2FA'),
+            'icon' => 'fas fa-flask',
+            'description' => __('A temporary non-production method for testing modular 2FA.'),
+        ];
 
-    public function getLabel(): string
-    {
-        return __('Dummy 2FA (Test)');
-    }
-
-    public function getIcon(): string
-    {
-        return 'fas fa-flask';
-    }
-
-    public function getDescription(): string
-    {
-        return __('A temporary method for testing modular 2FA.');
+        return $key ? ($settings[$key] ?? null) : $settings;
     }
 
     public function isAvailable(User $user): bool

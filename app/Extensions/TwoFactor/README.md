@@ -26,10 +26,7 @@ app/Extensions/TwoFactor/YourMethod/
 Your main class must extend `App\Classes\TwoFactorExtension`.
 
 ### Required Methods
-- `getName()`: Technical identifier (e.g., `totp`). Used in routes and namespaces.
-- `getLabel()`: User-friendly name (e.g., `Authenticator App`).
-- `getIcon()`: FontAwesome icon class (e.g., `fas fa-mobile-alt`).
-- `getDescription()`: Short description shown in the picker.
+- `getSettings(?string $key = null)`: Method configuration metadata array (contains `name`, `label`, `icon`, `description`) or a specific property if `$key` is passed.
 - `getSettingsView()`: Name of the Blade view for the profile card.
 - `getChallengeView()`: Name of the Blade view for the login screen.
 - `verify(Request $request)`: Logic to validate the user's code/token.

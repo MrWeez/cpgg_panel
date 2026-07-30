@@ -70,7 +70,7 @@ class DisableTwoFactorCommand extends Command
         }
 
         $choices = $methods->mapWithKeys(function ($m) {
-            $label = $this->twoFactorService->getExtension($m->method)?->getLabel() ?? ucfirst($m->method);
+            $label = $this->twoFactorService->getExtension($m->method)?->getSettings('label') ?? ucfirst($m->method);
             return [$m->method => "{$label} ({$m->method})"];
         })->toArray();
 

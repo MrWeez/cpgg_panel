@@ -5,7 +5,7 @@
             <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center w-100">
                 <!-- Mobile row -->
                 <div class="d-flex align-items-center justify-content-between w-100 d-md-none">
-                    <i class="{{ $method->getIcon() }} fa-2x text-muted"></i>
+                    <i class="{{ $method->getSettings('icon') }} fa-2x text-muted"></i>
 
                     @if($dummy)
                         <span class="badge badge-success">{{ __('Enabled') }}</span>
@@ -14,10 +14,10 @@
                     @endif
                 </div>
                 <!-- Desktop icon and text -->
-                <i class="d-none d-md-inline-block mr-md-3 {{ $method->getIcon() }} fa-2x text-muted"></i>
+                <i class="d-none d-md-inline-block mr-md-3 {{ $method->getSettings('icon') }} fa-2x text-muted"></i>
                 <div class="mt-2 mt-md-0">
-                    <div class="font-weight-bold">{{ $method->getLabel() }}</div>
-                    <div class="text-muted small">{{ $method->getDescription() }}</div>
+                    <div class="font-weight-bold">{{ $method->getSettings('label') }}</div>
+                    <div class="text-muted small">{{ $method->getSettings('description') }}</div>
                 </div>
             </div>
             <!-- Desktop badge -->

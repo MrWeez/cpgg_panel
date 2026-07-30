@@ -25,24 +25,16 @@ class TotpExtension extends TwoFactorExtension
         $this->twoFactorService = $twoFactorService;
     }
 
-    public function getName(): string
+    public function getSettings(?string $key = null): mixed
     {
-        return 'totp';
-    }
+        $settings = [
+            'name' => 'totp',
+            'label' => __('Authenticator App'),
+            'icon' => 'fas fa-mobile-alt',
+            'description' => __('Use an app to get codes'),
+        ];
 
-    public function getLabel(): string
-    {
-        return __('Authenticator App');
-    }
-
-    public function getIcon(): string
-    {
-        return 'fas fa-mobile-alt';
-    }
-
-    public function getDescription(): string
-    {
-        return __('Use an app to get codes');
+        return $key ? ($settings[$key] ?? null) : $settings;
     }
 
     public function getSettingsView(): string

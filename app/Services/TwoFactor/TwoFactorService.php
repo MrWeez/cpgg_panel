@@ -26,7 +26,7 @@ class TwoFactorService
             foreach ($classes as $class) {
                 if (is_subclass_of($class, TwoFactorExtension::class)) {
                     $extension = app($class);
-                    $this->extensions->put($extension->getName(), $extension);
+                    $this->extensions->put($extension->getSettings('name'), $extension);
                 }
             }
         }

@@ -8,24 +8,11 @@ use Illuminate\Http\Request;
 abstract class TwoFactorExtension extends AbstractExtension
 {
     /**
-     * Get the unique identifier for this 2FA method.
+     * Get settings array or a specific setting by key.
+     *
+     * Expected keys in array: name, label, icon, description
      */
-    abstract public function getName(): string;
-
-    /**
-     * Get the display label for this 2FA method.
-     */
-    abstract public function getLabel(): string;
-
-    /**
-     * Get the FontAwesome icon for this 2FA method.
-     */
-    abstract public function getIcon(): string;
-
-    /**
-     * Get a short description for this 2FA method.
-     */
-    abstract public function getDescription(): string;
+    abstract public function getSettings(?string $key = null): mixed;
 
     /**
      * Check if this 2FA method is available for the given user.

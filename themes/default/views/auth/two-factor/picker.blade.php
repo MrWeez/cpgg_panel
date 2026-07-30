@@ -17,18 +17,18 @@
 
                 <div class="mt-3">
                     @foreach($methods as $method)
-                        <a href="{{ route('login.2fa.method', ['method' => $method->getName()]) }}"
+                        <a href="{{ route('login.2fa.method', ['method' => $method->getSettings('name')]) }}"
                             class="d-flex align-items-center p-3 mb-2 bg-dark border border-secondary rounded text-decoration-none hover-shadow">
                             <div class="mr-3">
-                                <i class="{{ $method->getIcon() }} fa-lg text-primary"></i>
+                                <i class="{{ $method->getSettings('icon') }} fa-lg text-primary"></i>
                             </div>
 
                             <div class="flex-grow-1">
                                 <div class="text-sm font-weight-bold text-light">
-                                    {{ $method->getLabel() }}
+                                    {{ $method->getSettings('label') }}
                                 </div>
                                 <div class="text-xs text-muted">
-                                    {{ $method->getDescription() }}
+                                    {{ $method->getSettings('description') }}
                                 </div>
                             </div>
                         </a>
