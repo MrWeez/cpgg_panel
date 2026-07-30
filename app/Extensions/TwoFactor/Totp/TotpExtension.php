@@ -214,6 +214,8 @@ class TotpExtension extends TwoFactorExtension
             ]);
         }
 
+        $method->refresh();
+
         return response()->json([
             'recovery_codes' => decrypt($method->totp_recovery_codes),
         ]);
