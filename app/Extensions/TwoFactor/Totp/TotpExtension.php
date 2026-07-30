@@ -54,20 +54,12 @@ class TotpExtension extends TwoFactorExtension
         ]);
 
         $user = $request->user();
-        $code = preg_replace('/\s+/', '', $request->input('code'));
-
-        if (strlen($code) === 6 && ctype_digit($code)) {
-            // TOTP path
-            $method = $user->twoFactorMethods()->where('method', 'totp')->first();
-            if ($method && $method->totp_secret) {
-                return $this->totpService->verifyCode(decrypt($method->totp_secret), $code);
-            }
-        } elseif (strlen($code) === 8 && ctype_alnum($code)) {
-            // Recovery code path
-            return $this->recoveryCodeService->verify($user, $code);
+        $method = $user->twoFactorMethods()->where('method', 'totp')->first();
+        if (!$method) {
+            return false;
         }
 
-        return false;
+        return $this->verifyAnyCode($user, $method, $request->input('code'));
     }
 
     public function setup(Request $request)
@@ -159,16 +151,7 @@ class TotpExtension extends TwoFactorExtension
             return response()->json(['message' => __('Two-factor authentication is not enabled.')], 422);
         }
 
-        $code = preg_replace('/\s+/', '', $request->input('code'));
-        $isVerified = false;
-
-        if (strlen($code) === 6 && ctype_digit($code)) {
-            $isVerified = $this->totpService->verifyCode(decrypt($method->totp_secret), $code);
-        } elseif (strlen($code) === 8 && ctype_alnum($code)) {
-            $isVerified = $this->recoveryCodeService->verify($user, $code);
-        }
-
-        if (!$isVerified) {
+        if (!$this->verifyAnyCode($user, $method, $request->input('code'))) {
             throw ValidationException::withMessages([
                 'code' => [__('The provided two-factor authentication code was invalid.')],
             ]);
@@ -199,16 +182,7 @@ class TotpExtension extends TwoFactorExtension
             return response()->json(['message' => __('Two-factor authentication is not enabled.')], 422);
         }
 
-        $code = preg_replace('/\s+/', '', $request->input('code'));
-        $isVerified = false;
-
-        if (strlen($code) === 6 && ctype_digit($code)) {
-            $isVerified = $this->totpService->verifyCode(decrypt($method->totp_secret), $code);
-        } elseif (strlen($code) === 8 && ctype_alnum($code)) {
-            $isVerified = $this->recoveryCodeService->verify($user, $code);
-        }
-
-        if (!$isVerified) {
+        if (!$this->verifyAnyCode($user, $method, $request->input('code'))) {
             throw ValidationException::withMessages([
                 'code' => [__('The provided two-factor authentication code was invalid.')],
             ]);
@@ -219,6 +193,21 @@ class TotpExtension extends TwoFactorExtension
         return response()->json([
             'recovery_codes' => decrypt($method->totp_recovery_codes),
         ]);
+    }
+
+    private function verifyAnyCode(User $user, UserTwoFactorMethod $method, string $rawCode): bool
+    {
+        $code = preg_replace('/\s+/', '', $rawCode);
+
+        if (strlen($code) === 6 && ctype_digit($code)) {
+            if ($method->totp_secret) {
+                return $this->totpService->verifyCode(decrypt($method->totp_secret), $code);
+            }
+        } elseif (strlen($code) === 8 && ctype_alnum($code)) {
+            return $this->recoveryCodeService->verify($user, $code);
+        }
+
+        return false;
     }
 
     public function getAllowedActions(): array
