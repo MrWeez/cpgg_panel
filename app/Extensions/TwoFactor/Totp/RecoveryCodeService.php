@@ -49,26 +49,26 @@ class RecoveryCodeService
         }
 
         $recoveryCodes = decrypt($method->totp_recovery_codes);
-        $isVerified = false;
+        $matchedIndex = null;
 
         foreach ($recoveryCodes as $index => $storedCode) {
-            // Using hash_equals for constant-time comparison of the plain codes
+            // Using hash_equals for constant-time comparison across all codes
             if (hash_equals($storedCode, $code)) {
-                // Burn the code
-                unset($recoveryCodes[$index]);
-                $method->totp_recovery_codes = encrypt(array_values($recoveryCodes));
-                $method->save();
-                $isVerified = true;
-                break;
+                $matchedIndex = $index;
             }
         }
 
-        if ($isVerified) {
+        if ($matchedIndex !== null) {
+            // Burn the code
+            unset($recoveryCodes[$matchedIndex]);
+            $method->totp_recovery_codes = encrypt(array_values($recoveryCodes));
+            $method->save();
+
             Cache::forget($cacheKey);
-        } else {
-            Cache::put($cacheKey, $attempts + 1, now()->addMinutes($limit['minutes']));
+            return true;
         }
 
-        return $isVerified;
+        Cache::put($cacheKey, $attempts + 1, now()->addMinutes($limit['minutes']));
+        return false;
     }
 }
