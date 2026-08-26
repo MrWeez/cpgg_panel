@@ -11,7 +11,7 @@ Every 2FA extension resides in `app/Extensions/TwoFactor/{MethodName}/`.
 ```text
 app/Extensions/TwoFactor/YourMethod/
 ├── migrations/             # Database changes specific to this method
-├── views/                  # Blade templates (settings, challenges)
+├── resources/views/        # Blade templates (settings, challenges)
 │   ├── auth/two-factor/    # Recommended path for challenge views
 │   └── profile_card.blade.php
 ├── YourMethodExtension.php # The main extension class
@@ -89,7 +89,7 @@ The system uses Laravel’s `loadViewsFrom` with a dynamic namespace pattern: `t
 ### How It Works
 When you call `view('twofactor_totp::profile_card')`, the system searches in this order:
 1. **Active Theme**: `themes/{theme}/views/vendor/twofactor_totp/profile_card.blade.php`
-2. **Extension Default**: `app/Extensions/TwoFactor/Totp/views/profile_card.blade.php`
+2. **Extension Default**: `app/Extensions/TwoFactor/Totp/resources/views/profile_card.blade.php`
 
 ### Common Override Paths
 - **Method Picker**: `themes/{theme}/views/auth/two-factor/picker.blade.php` (Core view)
