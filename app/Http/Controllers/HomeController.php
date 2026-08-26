@@ -9,10 +9,6 @@ use App\Settings\WebsiteSettings;
 use App\Settings\ReferralSettings;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\URL;
 use Carbon\Carbon;
 
 class HomeController extends Controller
@@ -35,13 +31,13 @@ class HomeController extends Controller
     public function getTimeLeftBoxBackground(float $daysLeft): string
     {
         if ($daysLeft >= 15) {
-            return $this::TIME_LEFT_BG_SUCCESS;
+            return self::TIME_LEFT_BG_SUCCESS;
         }
         if ($daysLeft <= 7) {
-            return $this::TIME_LEFT_BG_DANGER;
+            return self::TIME_LEFT_BG_DANGER;
         }
 
-        return $this::TIME_LEFT_BG_WARNING;
+        return self::TIME_LEFT_BG_WARNING;
     }
 
     /**
@@ -51,10 +47,7 @@ class HomeController extends Controller
      * @param  float  $hoursLeft
      * @return string|void
      */
-    public function getTimeLeftBoxUnit(float $daysLeft, float $hoursLeft)
-    {
-        return null;
-    }
+    // Deprecated method removed: getTimeLeftBoxUnit
 
     /**
      * @description Get the Text for the Days-Left-Box in HomeView
@@ -71,6 +64,11 @@ class HomeController extends Controller
 
         $fullDays = (int) floor($daysLeft);
         $remainingHours = (int) ceil($hoursLeft - ($fullDays * 24));
+
+        if ($remainingHours >= 24) {
+            $fullDays++;
+            $remainingHours = 0;
+        }
         if ($fullDays > 0 && $remainingHours > 0) {
             return strval(number_format($fullDays, 0)) . __('d') . ' ' . strval(number_format($remainingHours, 0)) . __('h');
         }
@@ -85,21 +83,20 @@ class HomeController extends Controller
     /** Show the application dashboard. */
     public function index(GeneralSettings $general_settings, WebsiteSettings $website_settings, ReferralSettings $referral_settings)
     {
-        $usage = Auth::user()->creditUsage();
-        $credits = Auth::user()->credits;
+        $user = Auth::user();
+        $usage = $user->creditUsage();
+        $credits = $user->credits;
         $bg = '';
         $boxText = '';
-        $unit = '';
         $timeLeft = null;
 
         /** Build our Time-Left-Box */
-        if ($credits > 10 && $usage > 0) {
+        if ($credits > 0 && $usage > 0) {
             $daysLeft = $credits / ($usage / 30);
             $hoursLeft = $credits / ($usage / 30 / 24);
 
             $bg = $this->getTimeLeftBoxBackground($daysLeft);
             $boxText = $this->getTimeLeftBoxText($daysLeft, $hoursLeft);
-            $unit = $this->getTimeLeftBoxUnit($daysLeft, $hoursLeft);
 
             if ($daysLeft > 1) {
                 $estimatedDate = Carbon::now()->addDays((int) ceil($daysLeft));
@@ -112,7 +109,7 @@ class HomeController extends Controller
                 'message' => __('Estimated run out: :date', ['date' => $estimatedDate->format('d-m-Y H:i')]),
                 'date' => $estimatedDate->toDateString(),
                 'value' => $boxText,
-                'unit' => $unit
+                // 'unit' => $unit // removed deprecated unit
             ];
         }
 
@@ -124,9 +121,9 @@ class HomeController extends Controller
             'useful_links_dashboard' => UsefulLink::where("position","like","%dashboard%")->get()->sortby("id"),
             'bg' => $bg,
             'boxText' => $boxText,
-            'unit' => $unit,
-            'numberOfReferrals' => DB::table('user_referrals')->where('referral_id', '=', Auth::user()->id)->count(),
-            'partnerDiscount' => PartnerDiscount::where('user_id', Auth::user()->id)->first(),
+            // 'unit' => $unit, // removed deprecated unit
+            'numberOfReferrals' => DB::table('user_referrals')->where('referral_id', '=', $user->id)->count(),
+            'partnerDiscount' => PartnerDiscount::where('user_id', $user->id)->first(),
             'myDiscount' => PartnerDiscount::getDiscount(),
             'timeLeft' => $timeLeft,
             'general_settings' => $general_settings,
