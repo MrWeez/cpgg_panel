@@ -45,16 +45,68 @@ class ExtensionServiceProvider extends ServiceProvider
                 }
 
                 // Load Views
-                $viewsDirectory = $extensionDirectory . DIRECTORY_SEPARATOR . 'views';
+                $viewsDirectory = $extensionDirectory . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'views';
                 if (is_dir($viewsDirectory)) {
                     $viewNamespace = Str::lower($namespaceName . '_' . $extensionName);
                     $this->loadViewsFrom($viewsDirectory, $viewNamespace);
+                }
+
+                // Load Translations
+                $langDirectory = $extensionDirectory . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'lang';
+                if (is_dir($langDirectory)) {
+                    $this->loadJsonTranslationsFrom($langDirectory);
+                    $this->loadTranslationsFrom($langDirectory, Str::lower($extensionName));
                 }
 
                 // Load Migrations
                 $migrationsDirectory = $extensionDirectory . DIRECTORY_SEPARATOR . 'migrations';
                 if (is_dir($migrationsDirectory)) {
                     $this->loadMigrationsFrom($migrationsDirectory);
+                }
+
+                // Load Artisan Commands
+                $commandsDirectory = $extensionDirectory . DIRECTORY_SEPARATOR . 'Commands';
+                if (is_dir($commandsDirectory) && $this->app->runningInConsole()) {
+                    $this->loadCommandsFromDirectory($commandsDirectory, "App\\Extensions\\{$namespaceName}\\{$extensionName}\\Commands");
+                }
+            }
+        }
+
+        // Boot Extension Schedules
+        if ($this->app->runningInConsole()) {
+            $this->app->booted(function () {
+                $schedule = $this->app->make(Schedule::class);
+                $this->scheduleExtensions($schedule);
+            });
+        }
+    }
+
+    /**
+     * Automatically discover and register Artisan commands from an extension's Commands directory.
+     */
+    protected function loadCommandsFromDirectory(string $directory, string $namespace): void
+    {
+        $finder = (new Finder())->in($directory)->files()->name('*.php');
+
+        foreach ($finder as $file) {
+            $class = $namespace . '\\' . str_replace(['/', '.php'], ['\\', ''], $file->getRelativePathname());
+
+            if (is_subclass_of($class, \Illuminate\Console\Command::class) && !(new \ReflectionClass($class))->isAbstract()) {
+                $this->commands([$class]);
+            }
+        }
+    }
+
+    /**
+     * Dispatch schedule registration to any extension defining a schedule() method on its main class or scheduler handler.
+     */
+    protected function scheduleExtensions(Schedule $schedule): void
+    {
+        if (class_exists(\App\Helpers\ExtensionHelper::class)) {
+            $extensionClasses = \App\Helpers\ExtensionHelper::getAllExtensionClasses();
+            foreach ($extensionClasses as $extensionClass) {
+                if (method_exists($extensionClass, 'schedule')) {
+                    $extensionClass::schedule($schedule);
                 }
             }
         }
