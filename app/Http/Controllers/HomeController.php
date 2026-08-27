@@ -103,7 +103,6 @@ class HomeController extends Controller
             ];
         }
 
-
         // RETURN ALL VALUES
         return view('home')->with([
             'usage' => $usage,
