@@ -650,8 +650,13 @@ class ServerController extends Controller
                 return true;
             }
 
-            // Check if node has free allocations (IP/port)
+            // Check if node has reached its per-node allocation limit.
+            if ($this->pterodactyl->nodeHasReachedAllocationLimit($node)) {
+                return true;
+            }
+
             $freeAllocations = $this->pterodactyl->getFreeAllocations($node);
+
             return empty($freeAllocations);
         });
 
@@ -670,7 +675,12 @@ class ServerController extends Controller
             ->get();
 
         $availableNodes = $nodes->reject(function ($node) use ($product) {
-            return !$this->pterodactyl->checkNodeResources($node, $product->memory, $product->disk);
+            if (!$this->pterodactyl->checkNodeResources($node, $product->memory, $product->disk)) {
+                return true;
+            }
+
+            // Check if node has reached its per-node allocation limit.
+            return $this->pterodactyl->nodeHasReachedAllocationLimit($node);
         });
 
         foreach ($availableNodes as $node) {
