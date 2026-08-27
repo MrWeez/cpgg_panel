@@ -21,9 +21,9 @@ use App\Enums\BillingPriority;
 use App\Settings\GeneralSettings;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Client\Response;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -354,7 +354,7 @@ class ServerController extends Controller
         Cache::forget('user_credits_left:' . $server->user_id);
     }
 
-    public function cancel(Server $server): RedirectResponse
+    public function cancel(Server $server): Response|RedirectResponse
     {
         if ($server->user_id !== Auth::id()) {
             return back()->with('error', __('This is not your Server!'));
@@ -362,11 +362,58 @@ class ServerController extends Controller
 
         try {
             $server->update(['canceled' => now()]);
+
+            if (request()->expectsJson()) {
+                return response()->noContent();
+            }
+
             return redirect()->route('servers.index')
                 ->with('success', __('Server canceled'));
         } catch (Exception $e) {
+            report($e);
+
+            if (request()->expectsJson()) {
+                return response()->json(['error' => __('Server cancellation failed')], 500);
+            }
+
             return redirect()->route('servers.index')
-                ->with('error', __('Server cancellation failed: ') . $e->getMessage());
+                ->with('error', __('Server cancellation failed'));
+        }
+    }
+
+    public function resume(Server $server): Response|RedirectResponse
+    {
+        if ($server->user_id !== Auth::id()) {
+            return back()->with('error', __('This is not your Server!'));
+        }
+
+        if ($server->canceled === null) {
+            if (request()->expectsJson()) {
+                return response()->json(['error' => __('Server is not canceled')], 422);
+            }
+
+            return redirect()->route('servers.index')
+                ->with('error', __('Server is not canceled'));
+        }
+
+        try {
+            $server->update(['canceled' => null]);
+
+            if (request()->expectsJson()) {
+                return response()->noContent();
+            }
+
+            return redirect()->route('servers.index')
+                ->with('success', __('Server cancellation has been revoked'));
+        } catch (Exception $e) {
+            report($e);
+
+            if (request()->expectsJson()) {
+                return response()->json(['error' => __('Server cancellation revoke failed')], 500);
+            }
+
+            return redirect()->route('servers.index')
+                ->with('error', __('Server cancellation revoke failed'));
         }
     }
 
@@ -388,6 +435,20 @@ class ServerController extends Controller
         ]);
     }
 
+    /**
+     * Determine whether the user has reached the per-product server limit.
+     */
+    private function productLimitReached(User $user, Product $product): bool
+    {
+        if ($product->serverlimit == 0) {
+            return false;
+        }
+
+        $productCount = $user->servers()->where('product_id', $product->id)->count();
+
+        return $productCount >= $product->serverlimit;
+    }
+
     private function getUpgradeOptions(Server $server, array $serverInfo): \Illuminate\Database\Eloquent\Collection
     {
         $currentProduct = Product::find($server->product_id);
@@ -396,6 +457,7 @@ class ServerController extends Controller
         $currentEgg = $serverInfo['egg'];
 
         //$currentProductEggs = $currentProduct->eggs->pluck('id')->toArray();
+        $user = Auth::user();
 
         return Product::orderBy('price', 'asc')
             ->with('nodes')->with('eggs')
@@ -406,7 +468,7 @@ class ServerController extends Controller
                 $builder->where('id', $currentEgg);
             })
             ->get()
-            ->map(function ($product) use ($currentProduct, $pteroNode) {
+            ->map(function ($product) use ($currentProduct, $pteroNode, $user) {
                 $product->eggs = $product->eggs->pluck('name')->toArray();
 
                 $memoryDiff = $product->memory - $currentProduct->memory;
@@ -417,6 +479,11 @@ class ServerController extends Controller
 
                 if ($memoryDiff > $maxMemory - $pteroNode['allocated_resources']['memory'] ||
                     $diskDiff > $maxDisk - $pteroNode['allocated_resources']['disk']) {
+                    $product->doesNotFit = true;
+                }
+
+                // Check server limit for the product
+                if ($this->productLimitReached($user, $product)) {
                     $product->doesNotFit = true;
                 }
 
@@ -446,6 +513,12 @@ class ServerController extends Controller
         if (!$newProduct) {
             return redirect()->route('servers.show', ['server' => $server->id])
                 ->with('error', __('Selected product not found'));
+        }
+
+        // Check server limit for the new product
+        if ($oldProduct->id !== $newProduct->id && $this->productLimitReached($user, $newProduct)) {
+            return redirect()->route('servers.show', ['server' => $server->id])
+                ->with('error', __('You can not create any more Servers with this product!'));
         }
 
         if (!$this->validateUpgrade($server, $oldProduct, $newProduct)) {
@@ -515,6 +588,11 @@ class ServerController extends Controller
             return false;
         }
 
+        // Check server limit for the new product
+        if ($oldProduct->id !== $newProduct->id && $this->productLimitReached($user, $newProduct)) {
+            return false;
+        }
+
         return true;
     }
 
@@ -572,8 +650,13 @@ class ServerController extends Controller
                 return true;
             }
 
-            // Check if node has free allocations (IP/port)
+            // Check if node has reached its per-node allocation limit.
+            if ($this->pterodactyl->nodeHasReachedAllocationLimit($node)) {
+                return true;
+            }
+
             $freeAllocations = $this->pterodactyl->getFreeAllocations($node);
+
             return empty($freeAllocations);
         });
 
@@ -592,7 +675,12 @@ class ServerController extends Controller
             ->get();
 
         $availableNodes = $nodes->reject(function ($node) use ($product) {
-            return !$this->pterodactyl->checkNodeResources($node, $product->memory, $product->disk);
+            if (!$this->pterodactyl->checkNodeResources($node, $product->memory, $product->disk)) {
+                return true;
+            }
+
+            // Check if node has reached its per-node allocation limit.
+            return $this->pterodactyl->nodeHasReachedAllocationLimit($node);
         });
 
         foreach ($availableNodes as $node) {
