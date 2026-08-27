@@ -64,7 +64,8 @@ Route::middleware(['auth', 'checkSuspended'])->group(function () {
     //normal routes
     Route::get('notifications/readAll', [NotificationController::class, 'readAll'])->name('notifications.readAll');
     Route::resource('notifications', NotificationController::class);
-    Route::patch('/servers/cancel/{server}', [ServerController::class, 'cancel'])->name('servers.cancel');
+    Route::patch('/servers/{server}/cancel', [ServerController::class, 'cancel'])->name('servers.cancel');
+    Route::patch('/servers/{server}/resume', [ServerController::class, 'resume'])->name('servers.resume');
     Route::post('/servers/validateDeploymentVariables', [ServerController::class, 'validateDeploymentVariables'])->name('servers.validateDeploymentVariables');
     Route::patch('/servers/{server}/billing_priority', [ServerController::class, 'updateBillingPriority'])->name('servers.updateBillingPriority');
     Route::delete('/servers/{server}', [ServerController::class, 'destroy'])->name('servers.destroy');
@@ -163,6 +164,8 @@ Route::middleware(['auth', 'checkSuspended'])->group(function () {
         //payments
         Route::get('payments/datatable', [PaymentController::class, 'datatable'])->name('payments.datatable');
         Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
+        Route::post('payments/status/update/{payment}', [PaymentController::class, 'statusUpdate'])->name('payments.statusUpdate');
+        Route::post('payments/recheck/{payment}', [PaymentController::class, 'recheck'])->name('payments.recheck');
 
         //settings
         Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
@@ -205,6 +208,7 @@ Route::middleware(['auth', 'checkSuspended'])->group(function () {
         Route::get('ticket/datatable', [AdminTicketsController::class, 'datatable'])->name('ticket.datatable');
         Route::get('ticket/show/{ticket_id}', [AdminTicketsController::class, 'show'])->name('ticket.show');
         Route::post('ticket/reply', [AdminTicketsController::class, 'reply'])->name('ticket.reply');
+        Route::patch('ticket/{ticket_id}/update', [AdminTicketsController::class, 'update'])->name('ticket.update');
         Route::post('ticket/status/{ticket_id}', [AdminTicketsController::class, 'changeStatus'])->name('ticket.changeStatus');
         Route::post('ticket/delete/{ticket_id}', [AdminTicketsController::class, 'delete'])->name('ticket.delete');
         //ticket moderation blacklist

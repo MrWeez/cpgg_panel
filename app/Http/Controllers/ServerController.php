@@ -21,9 +21,9 @@ use App\Enums\BillingPriority;
 use App\Settings\GeneralSettings;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Client\Response;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -354,7 +354,7 @@ class ServerController extends Controller
         Cache::forget('user_credits_left:' . $server->user_id);
     }
 
-    public function cancel(Server $server): RedirectResponse
+    public function cancel(Server $server): Response|RedirectResponse
     {
         if ($server->user_id !== Auth::id()) {
             return back()->with('error', __('This is not your Server!'));
@@ -362,11 +362,58 @@ class ServerController extends Controller
 
         try {
             $server->update(['canceled' => now()]);
+
+            if (request()->expectsJson()) {
+                return response()->noContent();
+            }
+
             return redirect()->route('servers.index')
                 ->with('success', __('Server canceled'));
         } catch (Exception $e) {
+            report($e);
+
+            if (request()->expectsJson()) {
+                return response()->json(['error' => __('Server cancellation failed')], 500);
+            }
+
             return redirect()->route('servers.index')
-                ->with('error', __('Server cancellation failed: ') . $e->getMessage());
+                ->with('error', __('Server cancellation failed'));
+        }
+    }
+
+    public function resume(Server $server): Response|RedirectResponse
+    {
+        if ($server->user_id !== Auth::id()) {
+            return back()->with('error', __('This is not your Server!'));
+        }
+
+        if ($server->canceled === null) {
+            if (request()->expectsJson()) {
+                return response()->json(['error' => __('Server is not canceled')], 422);
+            }
+
+            return redirect()->route('servers.index')
+                ->with('error', __('Server is not canceled'));
+        }
+
+        try {
+            $server->update(['canceled' => null]);
+
+            if (request()->expectsJson()) {
+                return response()->noContent();
+            }
+
+            return redirect()->route('servers.index')
+                ->with('success', __('Server cancellation has been revoked'));
+        } catch (Exception $e) {
+            report($e);
+
+            if (request()->expectsJson()) {
+                return response()->json(['error' => __('Server cancellation revoke failed')], 500);
+            }
+
+            return redirect()->route('servers.index')
+                ->with('error', __('Server cancellation revoke failed'));
         }
     }
 

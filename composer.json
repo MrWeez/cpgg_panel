@@ -12,14 +12,11 @@
         "ext-curl": "*",
         "ext-intl": "*",
         "ext-mysqli": "*",
-        "biscolab/laravel-recaptcha": "^6.1",
-        "coderflex/laravel-turnstile": "^2.1",
         "doctrine/dbal": "^4.0.4",
         "guzzlehttp/guzzle": "^7.5",
         "hidehalo/nanoid-php": "^1.1.12",
-        "josiasmontag/laravel-recaptchav3": "^1.0",
         "kkomelin/laravel-translatable-string-exporter": "^1.22",
-        "laravel/framework": "^11.32",
+        "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10",
         "laravel/ui": "^4.5.2",
         "laraveldaily/laravel-invoices": "^4.0.0",
@@ -36,15 +33,16 @@
         "symfony/http-client": "^7.1.8",
         "symfony/intl": "^7.1.8",
         "symfony/mailgun-mailer": "^7.1.6",
-        "yajra/laravel-datatables-oracle": "^11.1"
+        "yajra/laravel-datatables-oracle": "^12.0"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.13",
         "fakerphp/faker": "^1.21",
+        "knuckleswtf/scribe": "^5.9",
         "laravel/sail": "^1.31",
         "mockery/mockery": "^1.5.1",
         "nunomaduro/collision": "^8.3",
-        "phpunit/phpunit": "^11.2",
+        "phpunit/phpunit": "^11.0",
         "spatie/laravel-ignition": "^2.8"
     },
     "config": {
@@ -59,7 +57,6 @@
     "extra": {
         "laravel": {
             "dont-discover": [
-                "biscolab/laravel-recaptcha"
             ]
         }
     },
