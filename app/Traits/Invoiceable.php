@@ -46,11 +46,11 @@ trait Invoiceable
         ]);
         $item = (new InvoiceItem())
             ->title($shopProduct->description)
-            ->pricePerUnit(($shopProduct->price/1000));
+            ->pricePerUnit(($shopProduct->price / 1000));
 
         $notes = [
             __("Payment method") . ": " . $payment->payment_method,
-            $invoice_settings->additional_notes ? : "",
+            $invoice_settings->additional_notes ?: "",
         ];
         $notes = implode("<br>", $notes);
 
@@ -59,7 +59,7 @@ trait Invoiceable
             ->name(__("Invoice"))
             ->buyer($customer)
             ->seller($seller)
-            ->discountByPercent(PartnerDiscount::getDiscount())
+            ->discountByPercent(PartnerDiscount::getDiscount($user->id))
             ->taxRate(floatval($shopProduct->getTaxPercent()))
             ->shipping(0)
             ->addItem($item)
@@ -70,7 +70,7 @@ trait Invoiceable
             ->serialNumberFormat($invoice_settings->prefix . '{DELIMITER}{SERIES}{SEQUENCE}')
             ->currencyCode(strtoupper($payment->currency_code))
             ->currencySymbol(Currencies::getSymbol(strtoupper($payment->currency_code)))
-            ->notes("<br/>".$notes);
+            ->notes("<br/>" . $notes);
 
         if (file_exists($logoPath)) {
             $invoice->logo($logoPath);
