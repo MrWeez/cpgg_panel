@@ -41,15 +41,6 @@ class HomeController extends Controller
     }
 
     /**
-     * @description Set unit behind the remaining time (deprecated - units now in value)
-     *
-     * @param  float  $daysLeft
-     * @param  float  $hoursLeft
-     * @return string|void
-     */
-    // Deprecated method removed: getTimeLeftBoxUnit
-
-    /**
      * @description Get the Text for the Days-Left-Box in HomeView
      *
      * @param  float  $daysLeft
@@ -109,7 +100,6 @@ class HomeController extends Controller
                 'message' => __('Estimated run out: :date', ['date' => $estimatedDate->format('d-m-Y H:i')]),
                 'date' => $estimatedDate->toDateString(),
                 'value' => $boxText,
-                // 'unit' => $unit // removed deprecated unit
             ];
         }
 
@@ -121,7 +111,6 @@ class HomeController extends Controller
             'useful_links_dashboard' => UsefulLink::where("position","like","%dashboard%")->get()->sortby("id"),
             'bg' => $bg,
             'boxText' => $boxText,
-            // 'unit' => $unit, // removed deprecated unit
             'numberOfReferrals' => DB::table('user_referrals')->where('referral_id', '=', $user->id)->count(),
             'partnerDiscount' => PartnerDiscount::where('user_id', $user->id)->first(),
             'myDiscount' => PartnerDiscount::getDiscount(),
