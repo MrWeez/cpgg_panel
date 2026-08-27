@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\ServiceProvider;
+use Symfony\Component\Finder\Finder;
 use Illuminate\Support\Str;
 
 class ExtensionServiceProvider extends ServiceProvider
