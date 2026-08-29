@@ -164,6 +164,8 @@ class SettingsController extends Controller
             abort(400, 'Invalid settings class.');
         }
 
+        $redirectCategory = str_replace('Settings', '', class_basename($resolvedSettingsClass));
+
         $this->checkPermission("settings." . $category . ".write");
 
         if (method_exists($resolvedSettingsClass, 'getValidations')) {
@@ -175,7 +177,7 @@ class SettingsController extends Controller
 
         $validator = Validator::make($request->all(), $validations);
         if ($validator->fails()) {
-            return Redirect::to('admin/settings' . '#' . $category)->withErrors($validator)->withInput();
+            return Redirect::to('admin/settings' . '#' . $redirectCategory)->withErrors($validator)->withInput();
         }
 
         $settingsClass = new $resolvedSettingsClass();
@@ -233,7 +235,7 @@ class SettingsController extends Controller
         $settingsClass->save();
 
 
-        return Redirect::to('admin/settings' . '#' . $category)->with('success', 'Settings updated successfully.');
+        return Redirect::to('admin/settings' . '#' . $redirectCategory)->with('success', 'Settings updated successfully.');
     }
 
     public function updateIcons(Request $request)
