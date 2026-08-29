@@ -37,6 +37,14 @@ class PayPalExtension extends PaymentExtension
         ];
     }
 
+    public static function getPermissions(): array
+    {
+        return [
+            'View Paypal Settings' => 'settings.paypal.read',
+            'Manage Paypal Settings' => 'settings.paypal.write',
+        ];
+    }
+
     public static function getRedirectUrl(Payment $payment, ShopProduct $shopProduct, int $totalPrice): string
     {
         $currencyHelper = self::currencyHelper();

@@ -27,6 +27,14 @@ class MollieExtension extends PaymentExtension
         ];
     }
 
+    public static function getPermissions(): array
+    {
+        return [
+            'View Mollie Settings' => 'settings.mollie.read',
+            'Manage Mollie Settings' => 'settings.mollie.write',
+        ];
+    }
+
     public static function getRedirectUrl(Payment $payment, ShopProduct $shopProduct, int $totalPrice): string
     {
         // Mollie expects a decimal value string like "10.00".

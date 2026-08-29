@@ -31,6 +31,14 @@ class MercadoPagoExtension extends PaymentExtension
         ];
     }
 
+    public static function getPermissions(): array
+    {
+        return [
+            'View Mercado Pago Settings' => 'settings.mercadopago.read',
+            'Manage Mercado Pago Settings' => 'settings.mercadopago.write',
+        ];
+    }
+
     public static function getRedirectUrl(Payment $payment, ShopProduct $shopProduct, int $totalPrice): string
     {
         /**

@@ -37,6 +37,14 @@ class StripeExtension extends PaymentExtension
         ];
     }
 
+    public static function getPermissions(): array
+    {
+        return [
+            'View Stripe Settings' => 'settings.stripe.read',
+            'Manage Stripe Settings' => 'settings.stripe.write',
+        ];
+    }
+
     public static function getRedirectUrl(Payment $payment, ShopProduct $shopProduct, int $totalPrice): string
     {
         $displayTotal = self::currencyHelper()->convertForDisplay($totalPrice);
