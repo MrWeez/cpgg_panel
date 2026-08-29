@@ -36,13 +36,23 @@ class ExtensionServiceProvider extends ServiceProvider
             foreach ($extensionDirectories as $extensionDirectory) {
                 $extensionName = basename($extensionDirectory);
 
-                // Load Routes
-                $routesFile = $extensionDirectory . DIRECTORY_SEPARATOR . 'routes.php';
-                if (is_file($routesFile)) {
-                    $resolvedPath = realpath($routesFile);
+                // Load Web Routes
+                $webRoutesFile = $extensionDirectory . DIRECTORY_SEPARATOR . 'routes' . DIRECTORY_SEPARATOR . 'web.php';
+                if (is_file($webRoutesFile)) {
+                    $resolvedPath = realpath($webRoutesFile);
                     $basePath = realpath($extensionsBasePath);
                     if ($resolvedPath && $basePath && str_starts_with($resolvedPath, $basePath . DIRECTORY_SEPARATOR)) {
                         $this->loadRoutesFrom($resolvedPath);
+                    }
+                }
+
+                // Load API Routes
+                $apiRoutesFile = $extensionDirectory . DIRECTORY_SEPARATOR . 'routes' . DIRECTORY_SEPARATOR . 'api.php';
+                if (is_file($apiRoutesFile)) {
+                    $resolvedPath = realpath($apiRoutesFile);
+                    $basePath = realpath($extensionsBasePath);
+                    if ($resolvedPath && $basePath && str_starts_with($resolvedPath, $basePath . DIRECTORY_SEPARATOR)) {
+                        $this->loadExtensionApiRoutes($resolvedPath);
                     }
                 }
 
@@ -88,6 +98,19 @@ class ExtensionServiceProvider extends ServiceProvider
                 $this->scheduleExtensions($schedule);
             });
         }
+    }
+
+    /**
+     * Load an extension's API routes with the api middleware group and prefix,
+     * mirroring how the application's core API routes are registered.
+     */
+    protected function loadExtensionApiRoutes(string $path): void
+    {
+        $this->callAfterResolving('router', function ($router) use ($path) {
+            $router->group(['prefix' => 'api', 'middleware' => 'api', 'name' => 'api.'], function ($router) use ($path) {
+                require $path;
+            });
+        });
     }
 
     /**
