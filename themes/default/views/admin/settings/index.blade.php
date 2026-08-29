@@ -43,7 +43,7 @@
                 <div class="card-body">
                     <!-- Sidebar Menu -->
                     <div class="row d-flex">
-                        <div class="p-0 col-md-2 col-12">
+                        <div class="p-0 col-md-2 col-12 settings-menu">
                             <nav class="mt-1">
                                 <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="tablist"
                                     data-accordion="false">
@@ -353,6 +353,15 @@
 
     </section>
     <!-- END CONTENT -->
+
+    <style>
+        .settings-menu .nav-link p {
+            width: auto !important;
+            margin-left: 0 !important;
+            visibility: visible !important;
+            animation: none !important;
+        }
+    </style>
 
     <script>
         const tabPaneHash = window.location.hash;
