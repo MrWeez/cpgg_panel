@@ -92,7 +92,7 @@
         function submitResult(form) {
             Swal.fire({
                 title: '{{ __('Are you sure?') }}',
-                text: '{{ __('This action will permanently remove the user from the blacklist.') }}',
+                text: '{{ __('This action will permanently remove the user from the blacklist') }}',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: '{{ __('Yes, delete it!') }}',
