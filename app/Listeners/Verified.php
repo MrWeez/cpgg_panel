@@ -44,38 +44,38 @@ class Verified
             $event->user->update(['email_verified_reward' => true]);
         }
 
-        if (
-            $this->referralSettings->require_email_verification &&
-            in_array($this->referralSettings->mode, ['sign-up', 'both'])
-        ) {
+        if ($this->referralSettings->require_email_verification) {
             $referral = DB::table('user_referrals')
                 ->where('registered_user_id', $event->user->id)
                 ->whereNull('rewarded_at')
                 ->whereNull('deleted_at')
                 ->first();
 
-            if ($referral && $referral->referral_id) {
-                $ref_user = User::find($referral->referral_id);
+            if ($referral && $referral->referral_id && $this->referralSettings->rewardsOnSignUp($event->user)) {
+                $claimed = DB::table('user_referrals')
+                    ->where('registered_user_id', $event->user->id)
+                    ->whereNull('rewarded_at')
+                    ->whereNull('deleted_at')
+                    ->update(['rewarded_at' => now()]);
 
-                if ($ref_user) {
-                    $ref_user->increment('credits', $this->referralSettings->reward);
-                    $ref_user->notify(new ReferralNotification($event->user));
+                if ($claimed) {
+                    $ref_user = User::find($referral->referral_id);
 
-                    activity()
-                        ->performedOn($event->user)
-                        ->causedBy($ref_user)
-                        ->log(sprintf(
-                            'gained %s %s for sign-up-referral of %s (ID:%s)',
-                            $this->currencyHelper->formatForDisplay($this->referralSettings->reward),
-                            $this->generalSettings->credits_display_name,
-                            $event->user->name,
-                            $event->user->id
-                        ));
+                    if ($ref_user) {
+                        $ref_user->increment('credits', $this->referralSettings->reward);
+                        $ref_user->notify(new ReferralNotification($event->user));
 
-                    DB::table('user_referrals')
-                        ->where('registered_user_id', $event->user->id)
-                        ->whereNull('rewarded_at')
-                        ->update(['rewarded_at' => now()]);
+                        activity()
+                            ->performedOn($event->user)
+                            ->causedBy($ref_user)
+                            ->log(sprintf(
+                                'gained %s %s for sign-up-referral of %s (ID:%s)',
+                                $this->currencyHelper->formatForDisplay($this->referralSettings->reward),
+                                $this->generalSettings->credits_display_name,
+                                $event->user->name,
+                                $event->user->id
+                            ));
+                    }
                 }
             }
         }
