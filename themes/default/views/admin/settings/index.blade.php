@@ -78,7 +78,7 @@
                                 </ul>
 
 
-                                <button class="mb-2 btn btn-outline-secondary mb-md-0" type="button" data-toggle="collapse"
+                                <button class="btn btn-outline-secondary settings-extensions-toggle" type="button" data-toggle="collapse"
                                     data-target="#collapseExtensions" aria-expanded="false"
                                     aria-controls="collapseExtensions">
                                     {{ __('Extension Settings') }}
@@ -367,6 +367,10 @@
             align-items: center;
             white-space: nowrap;
             overflow: hidden;
+        }
+
+        .settings-menu .settings-extensions-toggle {
+            margin-bottom: 0.2rem;
         }
 
         .settings-menu .nav-sidebar .nav-link .nav-icon {
