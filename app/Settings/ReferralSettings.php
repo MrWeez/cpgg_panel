@@ -12,6 +12,7 @@ class ReferralSettings extends Settings
     public ?int $reward = null;
     public ?int $percentage = null;
 
+    public bool $require_email_verification = false;
     public static function group(): string
     {
         return 'referral';
@@ -29,6 +30,7 @@ class ReferralSettings extends Settings
             'mode' => 'required|in:commission,sign-up,both',
             'reward' => 'nullable|numeric',
             'percentage' => 'nullable|numeric',
+            'require_email_verification' => 'nullable|string',
         ];
     }
 
@@ -73,6 +75,11 @@ class ReferralSettings extends Settings
                 'label' => 'Commission Percentage',
                 'type' => 'number',
                 'description' => 'Percentage of credits earned from purchases by referred users.',
+            ],
+            'require_email_verification' => [
+                'label' => 'Require Email Verification',
+                'type' => 'boolean',
+                'description' => 'Require referred users to verify their email before the referral reward is granted.',
             ],
         ];
     }

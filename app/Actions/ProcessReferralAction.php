@@ -15,15 +15,18 @@ class ProcessReferralAction
         protected ReferralSettings $referralSettings,
         protected GeneralSettings $generalSettings,
         protected CurrencyHelper $currencyHelper,
-    )
-    {}
+    ) {
+    }
 
     public function execute(User $user, string $referral_code, bool $log_activity = false)
     {
         $ref_user = User::query()->where('referral_code', $referral_code)->first();
 
         if ($ref_user) {
-            if ($this->referralSettings->mode === 'sign-up' || $this->referralSettings->mode === 'both') {
+            if (
+                in_array($this->referralSettings->mode, ['sign-up', 'both']) &&
+                (!$this->referralSettings->require_email_verification || $user->hasVerifiedEmail())
+            ) {
                 $ref_user->increment('credits', $this->referralSettings->reward);
                 $ref_user->notify(new ReferralNotification($user));
 
@@ -48,6 +51,10 @@ class ProcessReferralAction
                 'registered_user_id' => $user->id,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'rewarded_at' => (
+                    !$this->referralSettings->require_email_verification ||
+                    $user->hasVerifiedEmail()
+                ) ? now() : null,
             ]);
         }
     }
