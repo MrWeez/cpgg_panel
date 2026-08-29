@@ -43,7 +43,7 @@
                 <div class="card-body">
                     <!-- Sidebar Menu -->
                     <div class="row d-flex">
-                        <div class="p-0 col-md-2 col-12 settings-menu">
+                        <div class="p-0 col-12 col-md-auto settings-menu">
                             <nav class="mt-1">
                                 <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="tablist"
                                     data-accordion="false">
@@ -110,7 +110,7 @@
                         </div>
                         <!-- /.sidebar-menu -->
                         <!-- Content in $settings -->
-                        <div class="p-0 col-md-10 col-12">
+                        <div class="p-0 col-12 col-md settings-content">
                             <div class="tab-content">
                                 <div class="container tab-pane fade" id="icons" role="tabpanel">
 
@@ -355,11 +355,48 @@
     <!-- END CONTENT -->
 
     <style>
-        .settings-menu .nav-link p {
+        .settings-menu .nav-sidebar .nav-link {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .settings-menu .nav-sidebar .nav-link .nav-icon {
+            flex: 0 0 auto;
+        }
+
+        .settings-menu .nav-sidebar .nav-link p {
+            flex: 0 1 auto;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
             width: auto !important;
             margin-left: 0 !important;
             visibility: visible !important;
             animation: none !important;
+        }
+
+        .settings-menu .nav-sidebar .nav-header {
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        @media (min-width: 768px) {
+            .settings-menu {
+                max-width: 240px;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .settings-menu .nav-sidebar {
+                flex-direction: row;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+            }
         }
     </style>
 
