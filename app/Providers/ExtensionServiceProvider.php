@@ -77,9 +77,9 @@ class ExtensionServiceProvider extends ServiceProvider
                 }
 
                 // Load Artisan Commands
-                $commandsDirectory = $extensionDirectory . DIRECTORY_SEPARATOR . 'Commands';
+                $commandsDirectory = $extensionDirectory . DIRECTORY_SEPARATOR . 'Console' . DIRECTORY_SEPARATOR . 'Commands';
                 if (is_dir($commandsDirectory) && $this->app->runningInConsole()) {
-                    $this->loadCommandsFromDirectory($commandsDirectory, "App\\Extensions\\{$namespaceName}\\{$extensionName}\\Commands");
+                    $this->loadCommandsFromDirectory($commandsDirectory, "App\\Extensions\\{$namespaceName}\\{$extensionName}\\Console\\Commands");
                 }
             }
         }
