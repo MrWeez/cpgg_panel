@@ -263,7 +263,7 @@ class HtmlSanitizer
         // Paste-screenshot images from TinyMCE/Summernote are inline base64
         // data URIs. Allow only raster image mime types on src, never as href.
         if ($attribute === 'src'
-            && preg_match('/^data:image\/(png|jpe?g|gif|webp);base64,/', $url)) {
+            && preg_match('/^data:image\/(png|jpe?g|gif|webp);base64,/i', $url)) {
             return true;
         }
 

@@ -55,7 +55,7 @@ class UserController extends Controller
 
     private $pterodactyl;
 
-    public function __construct(PterodactylSettings $ptero_settings)
+    public function __construct(PterodactylSettings $ptero_settings, private NotificationService $notificationService)
     {
         $this->pterodactyl = new PterodactylClient($ptero_settings);
     }
@@ -429,7 +429,7 @@ class UserController extends Controller
         $mail = null;
         $database = null;
         if (in_array('database', $data['via'])) {
-            $database = app(NotificationService::class)->buildDatabaseNotification($data['title'], $data['content']);
+            $database = $this->notificationService->buildDatabaseNotification($data['title'], $data['content']);
         }
         if (in_array('mail', $data['via'])) {
             $mail = (new MailMessage)
