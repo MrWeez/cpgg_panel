@@ -564,10 +564,7 @@ class UserController extends Controller
         $ref_user = User::query()->where('referral_code', $ref_code)->first();
 
         if ($ref_user) {
-            $reward = (
-                in_array($this->referralSettings->mode, ['sign-up', 'both']) &&
-                (!$this->referralSettings->require_email_verification || $user->hasVerifiedEmail())
-            );
+            $reward = $this->referralSettings->rewardsOnSignUp($user);
 
             if ($reward) {
                 $ref_user->increment('credits', $this->referralSettings->reward);

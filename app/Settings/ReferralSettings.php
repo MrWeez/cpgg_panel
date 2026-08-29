@@ -2,6 +2,7 @@
 
 namespace App\Settings;
 
+use App\Models\User;
 use Spatie\LaravelSettings\Settings;
 
 class ReferralSettings extends Settings
@@ -13,6 +14,16 @@ class ReferralSettings extends Settings
     public ?int $percentage = null;
 
     public bool $require_email_verification = false;
+
+    /**
+     * Determine whether the sign-up reward should be granted for a user.
+     */
+    public function rewardsOnSignUp(User $user): bool
+    {
+        return in_array($this->mode, ['sign-up', 'both']) &&
+            (!$this->require_email_verification || $user->hasVerifiedEmail());
+    }
+
     public static function group(): string
     {
         return 'referral';

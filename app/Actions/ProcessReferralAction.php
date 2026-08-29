@@ -23,10 +23,9 @@ class ProcessReferralAction
         $ref_user = User::query()->where('referral_code', $referral_code)->first();
 
         if ($ref_user) {
-            if (
-                in_array($this->referralSettings->mode, ['sign-up', 'both']) &&
-                (!$this->referralSettings->require_email_verification || $user->hasVerifiedEmail())
-            ) {
+            $reward = $this->referralSettings->rewardsOnSignUp($user);
+
+            if ($reward) {
                 $ref_user->increment('credits', $this->referralSettings->reward);
                 $ref_user->notify(new ReferralNotification($user));
 
@@ -51,10 +50,7 @@ class ProcessReferralAction
                 'registered_user_id' => $user->id,
                 'created_at' => now(),
                 'updated_at' => now(),
-                'rewarded_at' => (
-                    !$this->referralSettings->require_email_verification ||
-                    $user->hasVerifiedEmail()
-                ) ? now() : null,
+                'rewarded_at' => $reward ? now() : null,
             ]);
         }
     }
