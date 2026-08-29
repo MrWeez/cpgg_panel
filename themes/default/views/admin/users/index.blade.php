@@ -72,7 +72,7 @@
         function submitResult(form) {
             Swal.fire({
                 title: '{{ __('Are you sure?') }}',
-                text: '{{ __('This action will permanently delete the user.') }}',
+                text: '{{ __('This action will permanently delete the user') }}',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: '{{ __('Yes, delete it!') }}',

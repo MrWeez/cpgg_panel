@@ -61,7 +61,7 @@
         function submitResult(form) {
             Swal.fire({
                 title: '{{ __('Are you sure?') }}',
-                text: '{{ __('This action will permanently delete the API Key and will no longer be available for use.') }}',
+                text: '{{ __('This action will permanently delete the API Key and will no longer be available for use') }}',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: '{{ __('Yes, delete it!') }}',

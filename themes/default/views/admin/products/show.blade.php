@@ -257,7 +257,7 @@
         function deleteProduct(form) {
             Swal.fire({
                 title: '{{ __('Are you sure?') }}',
-                text: '{{ __('This action will permanently delete the product.') }}',
+                text: '{{ __('This action will permanently delete the product') }}',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: '{{ __('Yes, delete it!') }}',

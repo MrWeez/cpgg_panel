@@ -108,7 +108,7 @@
         function submitResult(form) {
             Swal.fire({
                 title: '{{ __('Are you sure?') }}',
-                text: '{{ __('This action will permanently delete the ticket category.') }}',
+                text: '{{ __('This action will permanently delete the ticket category') }}',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: '{{ __('Yes, delete it!') }}',
