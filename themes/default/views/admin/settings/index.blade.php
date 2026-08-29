@@ -357,7 +357,11 @@
     <script>
         const tabPaneHash = window.location.hash;
         if (tabPaneHash) {
-            $('.nav-item a[href="' + tabPaneHash + '"]').tab('show');
+            const tabLink = $('.nav-item a[href="' + tabPaneHash + '"]');
+            tabLink.tab('show');
+            if (tabLink.closest('#collapseExtensions').length) {
+                $('#collapseExtensions').collapse('show');
+            }
         }
 
         $('.nav-pills a').click(function(e) {
