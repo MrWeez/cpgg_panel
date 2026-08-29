@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Classes\HtmlSanitizer;
 use App\Events\UserUpdateCreditsEvent;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Notifications\DynamicNotification;
+use App\Services\NotificationService;
 use App\Settings\LocaleSettings;
 use App\Settings\PterodactylSettings;
 use App\Classes\PterodactylClient;
@@ -429,11 +429,7 @@ class UserController extends Controller
         $mail = null;
         $database = null;
         if (in_array('database', $data['via'])) {
-            $database = [
-                'title' => $data['title'],
-                // Content is rendered with {!! !!} in notification pages.
-                'content' => (new HtmlSanitizer())->clean($data['content']),
-            ];
+            $database = app(NotificationService::class)->buildDatabaseNotification($data['title'], $data['content']);
         }
         if (in_array('mail', $data['via'])) {
             $mail = (new MailMessage)

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Classes\HtmlSanitizer;
 use App\Models\User;
 use App\Notifications\DynamicNotification;
 use Illuminate\Database\Eloquent\Collection;
@@ -10,6 +11,25 @@ use Illuminate\Support\Facades\Notification;
 
 class NotificationService
 {
+    /**
+     * Build the payload for the database channel.
+     *
+     * The content is rendered with {!! !!} in the notification pages, so it
+     * must be sanitized here — the single point where database notifications
+     * are created, so a new sender can't bypass the sanitizer.
+     *
+     * @param  string  $title
+     * @param  string  $content
+     * @return array<string, string>
+     */
+    public function buildDatabaseNotification(string $title, string $content): array
+    {
+        return [
+            'title' => $title,
+            'content' => (new HtmlSanitizer())->clean($content),
+        ];
+    }
+
     /**
      * Send notification to multiple users
      */

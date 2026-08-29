@@ -65,6 +65,7 @@ class UsefulLinkController extends Controller
             'icon' => $request->icon,
             'title' => $request->title,
             'link' => $request->link,
+            // Description is rendered with {!! !!} on the dashboard.
             'description' => (new HtmlSanitizer())->clean($request->description),
             'position' => implode(",",$request->position),
         ]);
@@ -122,6 +123,7 @@ class UsefulLinkController extends Controller
             'icon' => $request->icon,
             'title' => $request->title,
             'link' => $request->link,
+            // Description is rendered with {!! !!} on the dashboard.
             'description' => (new HtmlSanitizer())->clean($request->description),
             'position' => implode(",",$request->position),
         ]);
