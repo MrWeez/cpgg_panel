@@ -3,8 +3,10 @@
 namespace App\Helpers;
 
 use App\Classes\AbstractExtension;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Log;
 use Spatie\LaravelSettings\Settings;
+use Symfony\Component\Finder\Finder;
 use Throwable;
 
 /**
@@ -173,6 +175,36 @@ class ExtensionHelper
         }
 
         return array_values(array_unique($migrations));
+    }
+
+    /**
+     * Summary of getAllExtensionSeeders
+     * @return array of all seeder classes look like: App\Extensions\Namespace\Extension\database\seeders\FooSeeder
+     */
+    public static function getAllExtensionSeeders(): array
+    {
+        $seeders = [];
+
+        foreach (self::discoverExtensions() as $extension) {
+            $seedersDirectory = $extension['absolute_path'] . DIRECTORY_SEPARATOR . 'database' . DIRECTORY_SEPARATOR . 'seeders';
+            if (!is_dir($seedersDirectory)) {
+                continue;
+            }
+
+            $finder = (new Finder())->in($seedersDirectory)->files()->name('*.php');
+
+            foreach ($finder as $file) {
+                $class = str_replace('/', '\\', $extension['namespace_path']) . '\\database\\seeders\\' . str_replace(['/', DIRECTORY_SEPARATOR], '\\', substr($file->getRelativePathname(), 0, -4));
+
+                if (!is_subclass_of($class, Seeder::class) || (new \ReflectionClass($class))->isAbstract()) {
+                    continue;
+                }
+
+                $seeders[] = $class;
+            }
+        }
+
+        return array_values(array_unique($seeders));
     }
 
     /**

@@ -74,6 +74,13 @@ class ExtensionServiceProvider extends ServiceProvider
             }
         }
 
+        // Register Database Seeders
+        if ($this->app->runningInConsole()) {
+            foreach (\App\Helpers\ExtensionHelper::getAllExtensionSeeders() as $seederClass) {
+                $this->app->singleton($seederClass);
+            }
+        }
+
         // Boot Extension Schedules
         if ($this->app->runningInConsole()) {
             $this->app->booted(function () {
