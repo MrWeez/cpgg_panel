@@ -197,10 +197,16 @@
                                                 <input type="hidden" name="settings_class"
                                                     value="{{ $options['settings_class'] }}">
                                                 <input type="hidden" name="category" value="{{ $category }}">
-                                                @foreach ($options as $key => $value)
-                                                    @if ($key == 'category_icon' || $key == 'settings_class' || $key == 'position')
-                                                        @continue
+                                                @foreach ($options['sections'] as $section)
+                                                    @if ($section['label'])
+                                                        <div class="mt-3 mb-3 pb-2 border-bottom d-flex flex-column flex-md-row align-items-md-center justify-content-md-between">
+                                                            <h6 class="mb-1 mb-md-0 font-weight-bold">{{ __($section['label']) }}</h6>
+                                                            @if ($section['description'])
+                                                                <small class="text-muted">{{ __($section['description']) }}</small>
+                                                            @endif
+                                                        </div>
                                                     @endif
+                                                    @foreach ($section['options'] as $key => $value)
                                                     <div class="mb-3 row">
                                                         <div class="col-md-4 col-12 d-flex align-items-center">
                                                           <label class="w-100 d-inline-flex justify-content-between align-items-center" for="{{ $key }}">
@@ -298,6 +304,7 @@
 
                                                         </div>
                                                     </div>
+                                                    @endforeach
                                                 @endforeach
 
                                                 <!-- TODO: Display this only on the General tab

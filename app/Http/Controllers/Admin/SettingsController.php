@@ -84,6 +84,8 @@ class SettingsController extends Controller
 
             // collect all option input data
             $optionsData = [];
+            $sectionDefinitions = $optionInputData['sections'] ?? [];
+
             foreach ($options as $key => $value) {
                 $optionsData[$key] = [
                     'value' => $value,
@@ -91,7 +93,8 @@ class SettingsController extends Controller
                     'type' => $optionInputData[$key]['type'] ?? 'string',
                     'description' => $optionInputData[$key]['description'] ?? '',
                     'options' => $optionInputData[$key]['options'] ?? [],
-                    'identifier' => $optionInputData[$key]['identifier'] ?? 'option'
+                    'identifier' => $optionInputData[$key]['identifier'] ?? 'option',
+                    'section' => $optionInputData[$key]['section'] ?? null,
                 ];
 
                 if($optionInputData[$key]['type'] === 'number') {
@@ -102,6 +105,10 @@ class SettingsController extends Controller
                     }
                 }
             }
+
+            // Group options into named sections so the view renders each
+            // section header exactly once.
+            $optionsData = $this->groupOptionsIntoSections($optionsData, $sectionDefinitions);
 
             // collect category icon if available
             if (isset($optionInputData['category_icon'])) {
@@ -143,6 +150,65 @@ class SettingsController extends Controller
             'active_theme' => Theme::active(),
             'images' => $images
         ]);
+    }
+
+    /**
+     * Group option fields into sections.
+     *
+     * Each option can declare the section it belongs to via the "section" key.
+     * Section metadata (label + description) is defined once under the
+     * "sections" key of getOptionInputData(). Sections are rendered in the
+     * order they are first referenced by an option, followed by any declared
+     * sections that were not used. Options without a section are placed in a
+     * leading group that renders without a header, keeping the current layout.
+     *
+     * @param array<string, array<string, mixed>> $optionsData
+     * @param array<string, array<string, string>> $sectionDefinitions
+     * @return array<string, mixed>
+     */
+    private function groupOptionsIntoSections(array $optionsData, array $sectionDefinitions): array
+    {
+        $sections = [];
+        $ungrouped = [];
+
+        foreach ($optionsData as $key => $optionData) {
+            $sectionKey = $optionData['section'];
+            unset($optionData['section']);
+
+            if ($sectionKey === null) {
+                $ungrouped[$key] = $optionData;
+                continue;
+            }
+
+            $sections[$sectionKey]['options'][$key] = $optionData;
+            if (!isset($sections[$sectionKey]['label'])) {
+                $sections[$sectionKey]['label'] = $sectionDefinitions[$sectionKey]['label'] ?? ucwords(str_replace('_', ' ', $sectionKey));
+                $sections[$sectionKey]['description'] = $sectionDefinitions[$sectionKey]['description'] ?? '';
+            }
+        }
+
+        // Include declared sections in definition order, even when empty.
+        foreach ($sectionDefinitions as $sectionKey => $definition) {
+            if (!isset($sections[$sectionKey])) {
+                $sections[$sectionKey] = [
+                    'label' => $definition['label'] ?? ucwords(str_replace('_', ' ', $sectionKey)),
+                    'description' => $definition['description'] ?? '',
+                    'options' => [],
+                ];
+            }
+        }
+
+        $grouped = ['sections' => $sections];
+
+        if (!empty($ungrouped)) {
+            array_unshift($grouped['sections'], [
+                'label' => null,
+                'description' => null,
+                'options' => $ungrouped,
+            ]);
+        }
+
+        return $grouped;
     }
 
     /**
