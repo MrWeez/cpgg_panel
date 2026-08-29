@@ -14,10 +14,6 @@ class NotificationService
     /**
      * Build the payload for the database channel.
      *
-     * The content is rendered with {!! !!} in the notification pages, so it
-     * must be sanitized here — the single point where database notifications
-     * are created, so a new sender can't bypass the sanitizer.
-     *
      * @param  string  $title
      * @param  string  $content
      * @return array<string, string>
