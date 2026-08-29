@@ -5,6 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Facades\Currency;
 use App\Helpers\ExtensionHelper;
 use App\Http\Controllers\Controller;
+use App\Classes\HtmlSanitizer;
+use App\Settings\GeneralSettings;
+use App\Settings\TermsSettings;
+use App\Settings\TicketSettings;
+use App\Settings\WebsiteSettings;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -206,6 +211,25 @@ class SettingsController extends Controller
                 $settingsClass->$key = $inputValue;
             }
         }
+
+        // Sanitize HTML rendered with {!! !!} on the public pages: legal pages
+        // (imprint, privacy policy, tos), MOTD, global alert and ticket info.
+        if ($resolvedSettingsClass === TermsSettings::class
+            || $resolvedSettingsClass === WebsiteSettings::class
+            || $resolvedSettingsClass === GeneralSettings::class
+            || $resolvedSettingsClass === TicketSettings::class) {
+            $htmlKeys = array_merge(
+                ['imprint', 'privacy_policy', 'terms_of_service'],
+                ['motd_message', 'alert_message', 'information'],
+            );
+
+            foreach ($htmlKeys as $key) {
+                if (isset($settingsClass->$key) && $settingsClass->$key !== null) {
+                    $settingsClass->$key = (new HtmlSanitizer())->clean($settingsClass->$key);
+                }
+            }
+        }
+
         $settingsClass->save();
 
 
