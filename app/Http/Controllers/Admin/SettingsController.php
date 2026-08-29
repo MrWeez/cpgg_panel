@@ -85,6 +85,8 @@ class SettingsController extends Controller
             // collect all option input data
             $optionsData = [];
             $sectionDefinitions = $optionInputData['sections'] ?? [];
+            $categoryName = str_replace('Settings', '', class_basename($className));
+            $categoryDescription = $optionInputData['category_description'] ?? null;
 
             foreach ($options as $key => $value) {
                 $optionsData[$key] = [
@@ -108,7 +110,7 @@ class SettingsController extends Controller
 
             // Group options into named sections so the view renders each
             // section header exactly once.
-            $optionsData = $this->groupOptionsIntoSections($optionsData, $sectionDefinitions);
+            $optionsData = $this->groupOptionsIntoSections($optionsData, $sectionDefinitions, $categoryName, $categoryDescription);
 
             // collect category icon if available
             if (isset($optionInputData['category_icon'])) {
@@ -123,7 +125,7 @@ class SettingsController extends Controller
 
             $optionsData['settings_class'] = $className;
 
-            $settings[str_replace('Settings', '', class_basename($className))] = $optionsData;
+            $settings[$categoryName] = $optionsData;
         }
 
         $settings = $settings->sortBy('position');
@@ -160,13 +162,16 @@ class SettingsController extends Controller
      * "sections" key of getOptionInputData(). Sections are rendered in the
      * order they are first referenced by an option, followed by any declared
      * sections that were not used. Options without a section are placed in a
-     * leading group that renders without a header, keeping the current layout.
+     * leading section titled with the page name, so every settings page is
+     * rendered uniformly with a header.
      *
      * @param array<string, array<string, mixed>> $optionsData
      * @param array<string, array<string, string>> $sectionDefinitions
+     * @param string $categoryName Display name of the settings page.
+     * @param string|null $categoryDescription Description for the default section.
      * @return array<string, mixed>
      */
-    private function groupOptionsIntoSections(array $optionsData, array $sectionDefinitions): array
+    private function groupOptionsIntoSections(array $optionsData, array $sectionDefinitions, string $categoryName, ?string $categoryDescription): array
     {
         $sections = [];
         $ungrouped = [];
@@ -202,8 +207,8 @@ class SettingsController extends Controller
 
         if (!empty($ungrouped)) {
             array_unshift($grouped['sections'], [
-                'label' => null,
-                'description' => null,
+                'label' => $categoryName,
+                'description' => $categoryDescription,
                 'options' => $ungrouped,
             ]);
         }
