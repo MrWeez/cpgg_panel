@@ -5,6 +5,7 @@ namespace App\Helpers;
 use App\Classes\AbstractExtension;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
 use Spatie\LaravelSettings\Settings;
 use Symfony\Component\Finder\Finder;
 use Throwable;
@@ -239,6 +240,214 @@ class ExtensionHelper
             report($exception);
             return null;
         }
+    }
+
+    /**
+     * Get all sidebar pages declared by extensions for the given area.
+     *
+     * @param string $area "user" or "admin".
+     * @return array<int, array<string, mixed>>
+     */
+    public static function getSidebarPages(string $area): array
+    {
+        if (!in_array($area, ['user', 'admin'], true)) {
+            return [];
+        }
+
+        $pages = [];
+
+        foreach (self::getAllExtensionClasses() as $extensionClass) {
+            if (!is_callable([$extensionClass, 'getSidebarPages'])) {
+                continue;
+            }
+
+            try {
+                $extensionPages = $extensionClass::getSidebarPages();
+            } catch (Throwable $exception) {
+                Log::warning('Failed to load sidebar pages for extension.', [
+                    'extension' => $extensionClass,
+                    'error' => $exception->getMessage(),
+                ]);
+                continue;
+            }
+
+            if (!is_array($extensionPages)) {
+                continue;
+            }
+
+            foreach ($extensionPages as $page) {
+                $normalized = self::normalizeSidebarPage($page);
+                if ($normalized !== null && $normalized['area'] === $area) {
+                    $pages[] = $normalized;
+                }
+            }
+        }
+
+        usort($pages, static fn (array $a, array $b): int => $a['order'] <=> $b['order']);
+
+        return $pages;
+    }
+
+    /**
+     * Get the sidebar pages for the given area that the currently authenticated
+     * user is allowed to see based on the page permissions.
+     *
+     * @param string $area "user" or "admin".
+     * @return array<int, array<string, mixed>>
+     */
+    public static function getVisibleSidebarPages(string $area): array
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            self::getSidebarPages($area),
+            static function (array $page) use ($user): bool {
+                if (count($page['permissions']) === 0) {
+                    return true;
+                }
+
+                return $user->canAny($page['permissions']);
+            }
+        ));
+    }
+
+    /**
+     * Get all permissions registered by extensions, keyed by permission name.
+     *
+     * @return array<string, string> permission name => readable name
+     */
+    public static function getAllExtensionPermissions(): array
+    {
+        $permissions = [];
+
+        foreach (self::getAllExtensionClasses() as $extensionClass) {
+            if (!is_callable([$extensionClass, 'getPermissions'])) {
+                continue;
+            }
+
+            try {
+                $extensionPermissions = $extensionClass::getPermissions();
+            } catch (Throwable $exception) {
+                Log::warning('Failed to load permissions for extension.', [
+                    'extension' => $extensionClass,
+                    'error' => $exception->getMessage(),
+                ]);
+                continue;
+            }
+
+            if (!is_array($extensionPermissions)) {
+                continue;
+            }
+
+            foreach ($extensionPermissions as $readableName => $permissionName) {
+                if (!is_string($permissionName) || $permissionName === '') {
+                    continue;
+                }
+
+                $permissions[$permissionName] = is_string($readableName) && $readableName !== ''
+                    ? $readableName
+                    : $permissionName;
+            }
+        }
+
+        // Also register any permission referenced by a sidebar page so it can be
+        // assigned to roles even if the extension does not declare getPermissions().
+        foreach (array_merge(self::getSidebarPages('user'), self::getSidebarPages('admin')) as $page) {
+            foreach ($page['permissions'] as $permissionName) {
+                if (!isset($permissions[$permissionName])) {
+                    $permissions[$permissionName] = $permissionName;
+                }
+            }
+        }
+
+        return $permissions;
+    }
+
+    /**
+     * Normalize and validate a raw sidebar page definition.
+     *
+     * @param mixed $page
+     * @return array<string, mixed>|null
+     */
+    private static function normalizeSidebarPage(mixed $page): ?array
+    {
+        if (!is_array($page)) {
+            return null;
+        }
+
+        $title = $page['title'] ?? null;
+        if (!is_string($title) || trim($title) === '') {
+            return null;
+        }
+
+        $area = in_array($page['area'] ?? 'user', ['user', 'admin'], true)
+            ? $page['area']
+            : 'user';
+
+        $icon = is_string($page['icon'] ?? null) && trim($page['icon']) !== ''
+            ? $page['icon']
+            : 'fas fa-circle';
+
+        $permissions = [];
+        if (is_array($page['permissions'] ?? null)) {
+            foreach ($page['permissions'] as $permission) {
+                if (is_string($permission) && $permission !== '') {
+                    $permissions[] = $permission;
+                }
+            }
+        }
+        $permissions = array_values(array_unique($permissions));
+
+        $href = null;
+        $routeName = null;
+        $url = null;
+
+        if (is_string($page['route'] ?? null) && $page['route'] !== '' && Route::has($page['route'])) {
+            $routeName = $page['route'];
+            $params = is_array($page['route_params'] ?? null) ? $page['route_params'] : [];
+
+            try {
+                $href = route($routeName, $params);
+            } catch (Throwable $exception) {
+                Log::warning('Failed to resolve sidebar page route.', [
+                    'route' => $routeName,
+                    'error' => $exception->getMessage(),
+                ]);
+                $href = null;
+            }
+        }
+
+        if ($href === null && is_string($page['url'] ?? null) && $page['url'] !== '') {
+            $url = $page['url'];
+            if (str_starts_with($url, '/') && !str_contains($url, '://')) {
+                $href = $url;
+            } else {
+                $url = null;
+            }
+        }
+
+        if ($href === null) {
+            return null;
+        }
+
+        $request = request();
+
+        return [
+            'title' => $title,
+            'icon' => $icon,
+            'href' => $href,
+            'route_name' => $routeName,
+            'url' => $url,
+            'active' => $routeName !== null
+                ? $request->routeIs($routeName)
+                : $request->is(trim((string) $url, '/')),
+            'permissions' => $permissions,
+            'area' => $area,
+            'order' => (int) ($page['order'] ?? 0),
+        ];
     }
 
     private static function discoverExtensions(): array
