@@ -419,7 +419,7 @@
             e.preventDefault();
             e.stopPropagation();
             showSettingsTab(this);
-            window.location.hash = this.hash;
+            history.replaceState(null, '', this.hash);
         });
 
         const tabPaneHash = window.location.hash;
