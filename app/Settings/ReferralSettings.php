@@ -2,6 +2,7 @@
 
 namespace App\Settings;
 
+use App\Models\User;
 use Spatie\LaravelSettings\Settings;
 
 class ReferralSettings extends Settings
@@ -11,6 +12,17 @@ class ReferralSettings extends Settings
     public string $mode = 'commission';
     public ?int $reward = null;
     public ?int $percentage = null;
+
+    public bool $require_email_verification = false;
+
+    /**
+     * Determine whether the sign-up reward should be granted for a user.
+     */
+    public function rewardsOnSignUp(User $user): bool
+    {
+        return in_array($this->mode, ['sign-up', 'both']) &&
+            (!$this->require_email_verification || $user->hasVerifiedEmail());
+    }
 
     public static function group(): string
     {
@@ -29,6 +41,7 @@ class ReferralSettings extends Settings
             'mode' => 'required|in:commission,sign-up,both',
             'reward' => 'nullable|numeric',
             'percentage' => 'nullable|numeric',
+            'require_email_verification' => 'nullable|string',
         ];
     }
 
@@ -74,6 +87,11 @@ class ReferralSettings extends Settings
                 'label' => 'Commission Percentage',
                 'type' => 'number',
                 'description' => 'Percentage of credits earned from purchases by referred users',
+            ],
+            'require_email_verification' => [
+                'label' => 'Require Email Verification',
+                'type' => 'boolean',
+                'description' => 'Require referred users to verify their email before the referral reward is granted.',
             ],
         ];
     }
