@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Facades\Currency;
 use App\Helpers\ExtensionHelper;
 use App\Http\Controllers\Controller;
+use App\Settings\TermsSettings;
+use App\Classes\HtmlSanitizer;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -206,6 +208,17 @@ class SettingsController extends Controller
                 $settingsClass->$key = $inputValue;
             }
         }
+
+        // Sanitize legal-page HTML on save; the raw (unsanitized) content is
+        // rendered with {!! !!} on the public terms pages.
+        if ($resolvedSettingsClass === TermsSettings::class) {
+            foreach (['imprint', 'privacy_policy', 'terms_of_service'] as $key) {
+                if ($settingsClass->$key !== null) {
+                    $settingsClass->$key = (new HtmlSanitizer())->clean($settingsClass->$key);
+                }
+            }
+        }
+
         $settingsClass->save();
 
 
