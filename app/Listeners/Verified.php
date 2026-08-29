@@ -44,14 +44,17 @@ class Verified
             $event->user->update(['email_verified_reward' => true]);
         }
 
-        if ($this->referralSettings->require_email_verification) {
+        if (
+            $this->referralSettings->require_email_verification &&
+            $this->referralSettings->rewardsOnSignUp($event->user)
+        ) {
             $referral = DB::table('user_referrals')
                 ->where('registered_user_id', $event->user->id)
                 ->whereNull('rewarded_at')
                 ->whereNull('deleted_at')
                 ->first();
 
-            if ($referral && $referral->referral_id && $this->referralSettings->rewardsOnSignUp($event->user)) {
+            if ($referral && $referral->referral_id) {
                 $claimed = DB::table('user_referrals')
                     ->where('registered_user_id', $event->user->id)
                     ->whereNull('rewarded_at')
