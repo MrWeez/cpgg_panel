@@ -42,6 +42,7 @@ class ReferralSettings extends Settings
         return [
             'category_icon' => 'fas fa-user-friends',
             'position' => 8,
+            'category_description' => 'Configure the referral system and what referrers earn',
             'enabled' => [
                 'label' => 'Enabled',
                 'type' => 'boolean',

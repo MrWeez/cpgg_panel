@@ -40,6 +40,7 @@ class CouponSettings extends Settings
         return [
             "category_icon" => "fas fa-ticket-alt",
             'position' => 10,
+            'category_description' => 'Enable coupons in the store and control their usage and cleanup',
             'enabled' => [
                 'label' => 'Enable Coupons',
                 'type' => 'boolean',

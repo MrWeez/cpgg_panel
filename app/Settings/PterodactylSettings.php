@@ -58,6 +58,7 @@ class PterodactylSettings extends Settings
         return [
             'category_icon' => 'fas fa-kiwi-bird',
             'position' => 12,
+            'category_description' => 'Connection details and API settings for your Pterodactyl panel',
             'panel_url' => [
                 'label' => 'Panel URL',
                 'type' => 'string',

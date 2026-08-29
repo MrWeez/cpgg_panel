@@ -38,6 +38,7 @@ class TermsSettings extends Settings
         return [
             'category_icon' => 'fas fa-file-signature',
             'position' => 1,
+            'category_description' => 'Legal documents shown to your users',
             'terms_of_service' => [
                 'label' => 'Terms of Service',
                 'type' => 'textarea',

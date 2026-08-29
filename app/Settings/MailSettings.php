@@ -70,6 +70,7 @@ class MailSettings extends Settings
         return [
             'category_icon' => 'fas fa-envelope',
             'position' => 4,
+            'category_description' => 'Configure the mail transport and sender used by the panel',
             'mail_host' => [
                 'label' => 'Mail Host',
                 'type' => 'string',

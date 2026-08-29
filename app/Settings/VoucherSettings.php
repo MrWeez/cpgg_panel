@@ -36,6 +36,7 @@ class VoucherSettings extends Settings
         return [
             "category_icon" => "fas fa-money-check-alt",
             'position' => 11,
+            'category_description' => 'Control how vouchers are removed automatically',
             'delete_voucher_on_expires' => [
                 'label' => 'Auto Delete Expired Vouchers',
                 'type' => 'boolean',

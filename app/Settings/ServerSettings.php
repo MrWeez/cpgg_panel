@@ -40,6 +40,7 @@ class ServerSettings extends Settings
         return [
             'category_icon' => 'fas fa-server',
             'position' => 11,
+            'category_description' => 'Features and deployment settings for user-created servers',
             'creation_enabled' => [
                 'label' => 'Creation Enabled',
                 'type' => 'boolean',

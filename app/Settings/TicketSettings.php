@@ -36,6 +36,7 @@ class TicketSettings extends Settings
         return [
             'category_icon' => 'fas fa-ticket-alt',
             'position' => 6,
+            'category_description' => 'Enable the support ticket system and customize the information shown',
             'enabled' => [
                 'label' => 'Enabled',
                 'type' => 'boolean',
