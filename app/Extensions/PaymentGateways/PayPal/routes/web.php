@@ -1,17 +1,10 @@
 <?php
 
+use App\Extensions\PaymentGateways\PayPal\Http\Controllers\PayPalController;
 use Illuminate\Support\Facades\Route;
-use App\Extensions\PaymentGateways\PayPal\PayPalExtension;
 
 Route::middleware(['web', 'auth'])->group(function () {
-    Route::get(
-        'payment/PayPalSuccess',
-        function () {
-            return PayPalExtension::PaypalSuccess(request());
-        }
-    )->name('payment.PayPalSuccess');
+    Route::get('payment/PayPalSuccess', [PayPalController::class, 'success'])->name('payment.PayPalSuccess');
 });
 
-Route::post('payment/PayPalWebhook', function () {
-    return PayPalExtension::webhook(request());
-})->name('payment.PayPalWebhook');
+Route::post('payment/PayPalWebhook', [PayPalController::class, 'webhook'])->name('payment.PayPalWebhook');
