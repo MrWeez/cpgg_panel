@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Classes\HtmlSanitizer;
 use App\Enums\UsefulLinkLocation;
 use App\Http\Controllers\Controller;
 use App\Models\UsefulLink;
@@ -64,7 +65,7 @@ class UsefulLinkController extends Controller
             'icon' => $request->icon,
             'title' => $request->title,
             'link' => $request->link,
-            'description' => $request->description,
+            'description' => (new HtmlSanitizer())->clean($request->description),
             'position' => implode(",",$request->position),
         ]);
 
@@ -121,7 +122,7 @@ class UsefulLinkController extends Controller
             'icon' => $request->icon,
             'title' => $request->title,
             'link' => $request->link,
-            'description' => $request->description,
+            'description' => (new HtmlSanitizer())->clean($request->description),
             'position' => implode(",",$request->position),
         ]);
 

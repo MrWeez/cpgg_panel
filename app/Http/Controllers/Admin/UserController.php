@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Classes\HtmlSanitizer;
 use App\Events\UserUpdateCreditsEvent;
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -430,7 +431,8 @@ class UserController extends Controller
         if (in_array('database', $data['via'])) {
             $database = [
                 'title' => $data['title'],
-                'content' => $data['content'],
+                // Content is rendered with {!! !!} in notification pages.
+                'content' => (new HtmlSanitizer())->clean($data['content']),
             ];
         }
         if (in_array('mail', $data['via'])) {

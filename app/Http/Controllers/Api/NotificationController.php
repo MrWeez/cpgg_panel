@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Classes\HtmlSanitizer;
 use App\Http\Resources\NotificationResource;
 use App\Models\User;
 use App\Http\Controllers\Controller;
@@ -119,7 +120,8 @@ class NotificationController extends Controller
 
             $database = in_array('database', $via) ? [
                 'title' => $data['title'],
-                'content' => $data['content'],
+                // Content is rendered with {!! !!} in notification pages.
+                'content' => (new HtmlSanitizer())->clean($data['content']),
             ] : null;
 
             $mail = in_array('mail', $via) ?
@@ -174,7 +176,8 @@ class NotificationController extends Controller
 
             $database = in_array('database', $via) ? [
                 'title' => $data['title'],
-                'content' => $data['content'],
+                // Content is rendered with {!! !!} in notification pages.
+                'content' => (new HtmlSanitizer())->clean($data['content']),
             ] : null;
 
             $mail = in_array('mail', $via) ?
