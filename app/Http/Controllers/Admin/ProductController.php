@@ -265,7 +265,7 @@ class ProductController extends Controller
                 $checked = $product->disabled == false ? 'checked' : '';
 
                 return '
-                    <form class="d-inline" onsubmit="return submitResult();" method="post" action="' . route('admin.products.disable', $product->id) . '">
+                    <form class="d-inline" method="post" action="' . route('admin.products.disable', $product->id) . '">
                         ' . csrf_field() . '
                         ' . method_field('PATCH') . '
                         <div class="custom-control custom-switch">
