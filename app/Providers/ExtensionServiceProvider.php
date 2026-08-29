@@ -61,7 +61,7 @@ class ExtensionServiceProvider extends ServiceProvider
                 }
 
                 // Load Migrations
-                $migrationsDirectory = $extensionDirectory . DIRECTORY_SEPARATOR . 'migrations';
+                $migrationsDirectory = $extensionDirectory . DIRECTORY_SEPARATOR . 'database' . DIRECTORY_SEPARATOR . 'migrations';
                 if (is_dir($migrationsDirectory)) {
                     $this->loadMigrationsFrom($migrationsDirectory);
                 }

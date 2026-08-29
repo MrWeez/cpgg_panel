@@ -159,14 +159,14 @@ class ExtensionHelper
 
     /**
      * Summary of getAllExtensionMigrations
-     * @return array of all migration paths look like: app/Extensions/ExtensionNamespace/ExtensionName/migrations/
+     * @return array of all migration paths look like: app/Extensions/ExtensionNamespace/ExtensionName/database/migrations/
      */
     public static function getAllExtensionMigrations(): array
     {
         $migrations = [];
 
         foreach (self::discoverExtensions() as $extension) {
-            $migrationPath = $extension['absolute_path'] . DIRECTORY_SEPARATOR . 'migrations';
+            $migrationPath = $extension['absolute_path'] . DIRECTORY_SEPARATOR . 'database' . DIRECTORY_SEPARATOR . 'migrations';
             if (!is_dir($migrationPath)) {
                 continue;
             }
