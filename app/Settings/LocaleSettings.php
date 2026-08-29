@@ -56,14 +56,14 @@ class LocaleSettings extends Settings
             'available' => [
                 'label' => 'Available Locales',
                 'type' => 'multiselect',
-                'description' => 'The locales that are available for the user to choose from.',
+                'description' => 'The locales that are available for the user to choose from',
                 'options' => config('app.available_locales'),
                 'section' => 'general',
             ],
             'default' => [
                 'label' => 'Default Locale',
                 'type' => 'select',
-                'description' => 'The default locale to use.',
+                'description' => 'The default locale to use',
                 'options' => config('app.available_locales'),
                 'identifier' => 'display',
                 'section' => 'general',
@@ -71,13 +71,13 @@ class LocaleSettings extends Settings
             'clients_can_change' => [
                 'label' => 'Clients Can Change',
                 'type' => 'boolean',
-                'description' => 'Whether clients can change their locale.',
+                'description' => 'Whether clients can change their locale',
                 'section' => 'behavior',
             ],
             'dynamic' => [
                 'label' => 'Dynamic Locale',
                 'type' => 'boolean',
-                'description' => 'Whether to choose the language automatically based on the Geolocation of the client.',
+                'description' => 'Whether to choose the language automatically based on the Geolocation of the client',
                 'section' => 'behavior',
             ],
             'datatables' => [

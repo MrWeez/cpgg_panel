@@ -49,7 +49,7 @@ class MercadoPagoSettings extends Settings
             'webhook_secret' => [
                 'type' => 'string',
                 'label' => 'Webhook Secret',
-                'description' => 'Secret token appended to webhook URLs to validate incoming requests.',
+                'description' => 'Secret token appended to webhook URLs to validate incoming requests',
                 'section' => 'credentials',
             ],
         ];

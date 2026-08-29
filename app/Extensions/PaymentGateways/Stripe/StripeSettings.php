@@ -58,7 +58,7 @@ class StripeSettings extends Settings
             'webhook_signing_secret' => [
                 'type' => 'string',
                 'label' => 'Webhook Signing Secret',
-                'description' => 'The Stripe webhook signing secret (whsec_...) for production endpoints.',
+                'description' => 'The Stripe webhook signing secret (whsec_...) for production endpoints',
                 'section' => 'production',
             ],
             'test_publishable_key' => [
@@ -76,7 +76,7 @@ class StripeSettings extends Settings
             'test_webhook_signing_secret' => [
                 'type' => 'string',
                 'label' => 'Test Webhook Signing Secret',
-                'description' => 'The Stripe test webhook signing secret (whsec_...) used when app_env = local.',
+                'description' => 'The Stripe test webhook signing secret (whsec_...) used when app_env = local',
                 'section' => 'test',
             ]
         ];

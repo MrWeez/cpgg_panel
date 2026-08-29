@@ -62,7 +62,7 @@ class PayPalSettings extends Settings
             'webhook_id' => [
                 'type' => 'string',
                 'label' => 'Webhook ID',
-                'description' => 'PayPal webhook ID used to verify production webhook signatures.',
+                'description' => 'PayPal webhook ID used to verify production webhook signatures',
                 'section' => 'production',
             ],
             'sandbox_client_id' => [
@@ -80,7 +80,7 @@ class PayPalSettings extends Settings
             'sandbox_webhook_id' => [
                 'type' => 'string',
                 'label' => 'Sandbox Webhook ID',
-                'description' => 'PayPal webhook ID used to verify webhook signatures when app_env = local.',
+                'description' => 'PayPal webhook ID used to verify webhook signatures when app_env = local',
                 'section' => 'sandbox',
             ],
         ];

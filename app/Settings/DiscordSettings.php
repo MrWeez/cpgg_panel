@@ -68,31 +68,31 @@ class DiscordSettings extends Settings
             'bot_token' => [
                 'label' => 'Bot Token',
                 'type' => 'string',
-                'description' => 'The bot token for your Discord bot.',
+                'description' => 'The bot token for your Discord bot',
                 'section' => 'bot',
             ],
             'client_id' => [
                 'label' => 'Client ID',
                 'type' => 'string',
-                'description' => 'The client ID for your Discord bot.',
+                'description' => 'The client ID for your Discord bot',
                 'section' => 'bot',
             ],
             'client_secret' => [
                 'label' => 'Client Secret',
                 'type' => 'string',
-                'description' => 'The client secret for your Discord bot.',
+                'description' => 'The client secret for your Discord bot',
                 'section' => 'bot',
             ],
             'guild_id' => [
                 'label' => 'Guild ID',
                 'type' => 'string',
-                'description' => 'The guild ID for your Discord server.',
+                'description' => 'The guild ID for your Discord server',
                 'section' => 'guild',
             ],
             'role_id' => [
                 'label' => 'Role ID after linking',
                 'type' => 'string',
-                'description' => 'ID of the Discord-Role to give users when linking their discord Account.',
+                'description' => 'ID of the Discord-Role to give users when linking their discord Account',
                 'section' => 'roles',
             ],
             'role_for_active_clients' => [
@@ -108,7 +108,7 @@ class DiscordSettings extends Settings
             'role_id_for_active_clients' => [
                 'label' => 'Role ID for active Clients',
                 'type' => 'string',
-                'description' => 'ID of the Discord-Role to give users when they have an active server.',
+                'description' => 'ID of the Discord-Role to give users when they have an active server',
                 'section' => 'roles',
             ],
             'role_on_purchase' => [
@@ -124,7 +124,7 @@ class DiscordSettings extends Settings
             'role_id_on_purchase' => [
                 'label' => 'Role ID on Purchase',
                 'type' => 'string',
-                'description' => 'ID of the Discord-Role to give users when they purchase credits with real money.',
+                'description' => 'ID of the Discord-Role to give users when they purchase credits with real money',
                 'section' => 'roles',
             ],
         ];

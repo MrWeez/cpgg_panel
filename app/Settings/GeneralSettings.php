@@ -119,7 +119,7 @@ class GeneralSettings extends Settings
             'store_enabled' => [
                 'type' => 'boolean',
                 'label' => 'Enable Store',
-                'description' => 'Enable the store for users to purchase credits.',
+                'description' => 'Enable the store for users to purchase credits',
                 'section' => 'store',
             ],
             'sales_tax' => [
@@ -132,13 +132,13 @@ class GeneralSettings extends Settings
             'credits_display_name' => [
                 'type' => 'string',
                 'label' => 'Credits Display Name',
-                'description' => 'The name of the currency used.',
+                'description' => 'The name of the currency used',
                 'section' => 'store',
             ],
             'currency_format_override' => [
                 'type' => 'select',
                 'label' => 'Currency Format Override',
-                'description' => 'Force all currency displays to use this locale\'s formatting, overriding the current locale.',
+                'description' => 'Force all currency displays to use this locale\'s formatting, overriding the current locale',
                 'options' => array_merge(['' => 'Auto (Use Current Locale)'], self::getCurrencyFormatOptions()),
                 'identifier' => 'value',
                 'section' => 'store',
@@ -146,7 +146,7 @@ class GeneralSettings extends Settings
             'recaptcha_version' => [
                 'type' => 'select',
                 'label' => 'reCAPTCHA Version',
-                'description' => 'Enable reCAPTCHA on the login page.',
+                'description' => 'Enable reCAPTCHA on the login page',
                 'options' => [
                     'v2' => 'Recaptcha V2',
                     'v3' => 'Recaptcha v3',
@@ -158,25 +158,25 @@ class GeneralSettings extends Settings
             'recaptcha_site_key' => [
                 'type' => 'string',
                 'label' => 'reCAPTCHA Site Key',
-                'description' => 'The site key for reCAPTCHA.',
+                'description' => 'The site key for reCAPTCHA',
                 'section' => 'recaptcha',
             ],
             'recaptcha_secret_key' => [
                 'type' => 'string',
                 'label' => 'reCAPTCHA Secret Key',
-                'description' => 'The secret key for reCAPTCHA.',
+                'description' => 'The secret key for reCAPTCHA',
                 'section' => 'recaptcha',
             ],
             'phpmyadmin_url' => [
                 'type' => 'string',
                 'label' => 'phpMyAdmin URL',
-                'description' => 'The URL of your phpMyAdmin installation.',
+                'description' => 'The URL of your phpMyAdmin installation',
                 'section' => 'phpmyadmin',
             ],
             'alert_enabled' => [
                 'type' => 'boolean',
                 'label' => 'Enable Alert',
-                'description' => 'Enable an alert to be displayed on the home page.',
+                'description' => 'Enable an alert to be displayed on the home page',
                 'section' => 'alert',
             ],
             'alert_type' => [
@@ -190,13 +190,13 @@ class GeneralSettings extends Settings
                     'warning' => 'Orange',
                     'info' => 'Cyan',
                 ],
-                'description' => 'The type of alert to display.',
+                'description' => 'The type of alert to display',
                 'section' => 'alert',
             ],
             'alert_message' => [
                 'type' => 'textarea',
                 'label' => 'Alert Message',
-                'description' => 'The message to display in the alert.',
+                'description' => 'The message to display in the alert',
                 'section' => 'alert',
             ],
         ];
@@ -205,7 +205,7 @@ class GeneralSettings extends Settings
             'type' => 'select',
             'label' => 'Theme',
             'options' => self::getThemes(),
-            'description' => 'The theme to use for the site.',
+            'description' => 'The theme to use for the site',
             'section' => 'theme',
         ];
 

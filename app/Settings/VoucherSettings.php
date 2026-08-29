@@ -40,12 +40,12 @@ class VoucherSettings extends Settings
             'delete_voucher_on_expires' => [
                 'label' => 'Auto Delete Expired Vouchers',
                 'type' => 'boolean',
-                'description' => 'Automatically deletes the voucher if it expires.'
+                'description' => 'Automatically deletes the voucher if it expires'
             ],
             'delete_voucher_on_uses_reached' => [
                 'label' => 'Delete Voucher When Max Uses Reached',
                 'type' => 'boolean',
-                'description' => 'Delete a voucher as soon as its maximum usage is reached.'
+                'description' => 'Delete a voucher as soon as its maximum usage is reached'
             ],
         ];
     }

@@ -46,17 +46,17 @@ class ReferralSettings extends Settings
             'enabled' => [
                 'label' => 'Enabled',
                 'type' => 'boolean',
-                'description' => 'Enable referral system.',
+                'description' => 'Enable referral system',
             ],
             'always_give_commission' => [
                 'label' => 'Always Give Commission',
                 'type' => 'boolean',
-                'description' => 'Always give commission to the referrer or only on the first Purchase.',
+                'description' => 'Always give commission to the referrer or only on the first Purchase',
             ],
             'mode' => [
                 'label' => 'Mode',
                 'type' => 'select',
-                'description' => 'Referral mode.',
+                'description' => 'Referral mode',
                 'options' => [
                     'sign-up' => 'Sign-Up',
                     'commission' => 'Commission',
@@ -67,13 +67,13 @@ class ReferralSettings extends Settings
                 'label' => 'Sign-Up Reward',
                 'type' => 'number',
                 'step' => '0.001',
-                'description' => 'Reward in credits for the referrer.',
+                'description' => 'Reward in credits for the referrer',
                 'mustBeConverted' => true,
             ],
             'percentage' => [
                 'label' => 'Commission Percentage',
                 'type' => 'number',
-                'description' => 'Percentage of credits earned from purchases by referred users.',
+                'description' => 'Percentage of credits earned from purchases by referred users',
             ],
         ];
     }

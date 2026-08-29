@@ -40,12 +40,12 @@ class TicketSettings extends Settings
             'enabled' => [
                 'label' => 'Enabled',
                 'type' => 'boolean',
-                'description' => 'Enable or disable the ticket system.',
+                'description' => 'Enable or disable the ticket system',
             ],
             'information' => [
                 'label' => 'Ticket Information',
                 'type' => 'textarea',
-                'description' => 'Message shown on the right side when users create a new ticket.',
+                'description' => 'Message shown on the right side when users create a new ticket',
             ],
         ];
     }
