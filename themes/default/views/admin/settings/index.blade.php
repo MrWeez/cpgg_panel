@@ -401,19 +401,30 @@
     </style>
 
     <script>
-        const tabPaneHash = window.location.hash;
-        if (tabPaneHash) {
-            const tabLink = $('.nav-item a[href="' + tabPaneHash + '"]');
-            tabLink.tab('show');
-            if (tabLink.closest('#collapseExtensions').length) {
-                $('#collapseExtensions').collapse('show');
-            }
+        function showSettingsTab(tabLink) {
+            $('.settings-menu .nav-link').removeClass('active');
+            $('.tab-content .tab-pane').removeClass('active show');
+            $(tabLink).addClass('active');
+            $($(tabLink).attr('href')).addClass('active show');
         }
 
-        $('.nav-pills a').click(function(e) {
-            $(this).tab('show');
+        $('.settings-menu a[data-toggle="pill"]').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            showSettingsTab(this);
             window.location.hash = this.hash;
         });
+
+        const tabPaneHash = window.location.hash;
+        if (tabPaneHash) {
+            const tabLink = $('.settings-menu a[href="' + tabPaneHash + '"]');
+            if (tabLink.length) {
+                showSettingsTab(tabLink);
+                if (tabLink.closest('#collapseExtensions').length) {
+                    $('#collapseExtensions').collapse('show');
+                }
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', (event) => {
             $('.custom-select').select2({
