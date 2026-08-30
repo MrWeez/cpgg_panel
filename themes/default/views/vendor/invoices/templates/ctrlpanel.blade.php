@@ -193,33 +193,36 @@
 
     {{-- Seller - Buyer --}}
     @php
-        // Compose the buyer address according to regional conventions.
-        $buyer = $invoice->buyer;
-        $buyerCountry = $buyer->country_code ? strtoupper((string) $buyer->country_code) : null;
-        $buyerAddressLines = [];
-        if (!blank($buyer->street)) {
-            $buyerAddressLines[] = $buyer->street;
-        }
-        $cityAndState = trim(($buyer->city ?? '') . ($buyer->state ? ', ' . $buyer->state : ''));
-        $postalCity = trim(($buyer->code ?? '') . ' ' . ($buyer->city ?? ''));
-        if (in_array($buyerCountry, ['US', 'CA'], true)) {
-            // 123 Main St, Springfield, IL 62704
-            if ($cityAndState !== '') {
-                $buyerAddressLines[] = $cityAndState . (blank($buyer->code) ? '' : ' ' . $buyer->code);
+        // Compose the party address according to regional conventions.
+        $formatPartyAddress = function ($party) {
+            $country = $party->country_code ? strtoupper((string) $party->country_code) : null;
+            $lines = [];
+            if (!blank($party->street)) {
+                $lines[] = $party->street;
             }
-        } else {
-            // Hauptstraße 1, 10115 Berlin
-            if ($postalCity !== '') {
-                $buyerAddressLines[] = $postalCity;
+            $cityAndState = trim(($party->city ?? '') . ($party->state ? ', ' . $party->state : ''));
+            $postalCity = trim(($party->code ?? '') . ' ' . ($party->city ?? ''));
+            if (in_array($country, ['US', 'CA'], true)) {
+                // 123 Main St, Springfield, IL 62704
+                if ($cityAndState !== '') {
+                    $lines[] = $cityAndState . (blank($party->code) ? '' : ' ' . $party->code);
+                }
+            } else {
+                // Hauptstraße 1, 10115 Berlin
+                if ($postalCity !== '') {
+                    $lines[] = $postalCity;
+                }
+                if (!blank($party->state)) {
+                    $lines[] = $party->state;
+                }
             }
-            if (!blank($buyer->state)) {
-                $buyerAddressLines[] = $buyer->state;
+            if (!blank($party->country)) {
+                $lines[] = $party->country;
             }
-        }
-        if (!blank($buyer->country)) {
-            $buyerAddressLines[] = $buyer->country;
-        }
-        $buyerAddress = implode('<br>', $buyerAddressLines);
+            return implode('<br>', $lines);
+        };
+        $buyerAddress = $formatPartyAddress($invoice->buyer);
+        $sellerAddress = $formatPartyAddress($invoice->seller);
     @endphp
 
     <table class="table">
@@ -243,9 +246,9 @@
                         </p>
                     @endif
 
-                    @if($invoice->seller->address)
+                    @if($sellerAddress !== '')
                         <p class="seller-address">
-                            {{ $invoice->seller->address }}
+                            {!! $sellerAddress !!}
                         </p>
                     @endif
 

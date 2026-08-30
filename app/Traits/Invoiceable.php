@@ -26,10 +26,23 @@ trait Invoiceable
         $newInvoiceID = $lastInvoiceID + 1;
         $logoPath = storage_path('app/public/logo.png');
 
+        $sellerCountryCode = strtoupper((string) $invoice_settings->company_country);
+        $sellerCountryName = null;
+        if (!blank($sellerCountryCode)) {
+            $sellerCountryName = Countries::exists($sellerCountryCode)
+                ? Countries::getName($sellerCountryCode, 'en')
+                : $sellerCountryCode;
+        }
+
         $seller = new Party([
             'name' => $invoice_settings->company_name,
             'phone' => $invoice_settings->company_phone,
-            'address' => $invoice_settings->company_address,
+            'street' => $invoice_settings->company_address,
+            'city' => $invoice_settings->company_city,
+            'state' => $invoice_settings->company_state,
+            'code' => $invoice_settings->company_postal_code,
+            'country_code' => $sellerCountryCode,
+            'country' => $sellerCountryName,
             'vat' => $invoice_settings->company_vat,
             'custom_fields' => [
                 'E-Mail' => $invoice_settings->company_mail,

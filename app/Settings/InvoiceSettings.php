@@ -9,6 +9,9 @@ class InvoiceSettings extends Settings
 {
     public bool $enabled = false;
     public ?string $company_address = null;
+    public ?string $company_city = null;
+    public ?string $company_state = null;
+    public ?string $company_postal_code = null;
     public ?string $company_mail = null;
     public ?string $company_name = null;
     public ?string $company_phone = null;
@@ -33,12 +36,15 @@ class InvoiceSettings extends Settings
         return [
             'enabled' => 'nullable|string',
             'company_address' => 'nullable|string',
+            'company_city' => 'nullable|string',
+            'company_state' => 'nullable|string',
+            'company_postal_code' => 'nullable|string',
+            'company_country' => 'nullable|string|size:2',
             'company_mail' => 'nullable|string',
             'company_name' => 'nullable|string',
             'company_phone' => 'nullable|string',
             'company_vat' => 'nullable|string',
             'company_website' => 'nullable|string',
-            'company_country' => 'nullable|string|size:2',
             'prefix' => 'nullable|string',
             'additional_notes' => 'nullable|string',
         ];
@@ -85,7 +91,32 @@ class InvoiceSettings extends Settings
             'company_address' => [
                 'label' => 'Company Address',
                 'type' => 'string',
-                'description' => 'The address of your company',
+                'description' => 'The street, building and office of your company address',
+                'section' => 'company',
+            ],
+            'company_city' => [
+                'label' => 'Company City',
+                'type' => 'string',
+                'description' => 'The city of your company',
+                'section' => 'company',
+            ],
+            'company_state' => [
+                'label' => 'Company State/Province',
+                'type' => 'string',
+                'description' => 'The state or province of your company (optional)',
+                'section' => 'company',
+            ],
+            'company_postal_code' => [
+                'label' => 'Company Postal Code',
+                'type' => 'string',
+                'description' => 'The postal code of your company',
+                'section' => 'company',
+            ],
+            'company_country' => [
+                'label' => 'Company Country',
+                'type' => 'select',
+                'description' => 'The country of your company. Shown in the company address on your invoices',
+                'options' => Countries::getNames('en'),
                 'section' => 'company',
             ],
             'company_phone' => [
@@ -104,13 +135,6 @@ class InvoiceSettings extends Settings
                 'label' => 'Company Website',
                 'type' => 'string',
                 'description' => 'The website of your company',
-                'section' => 'company',
-            ],
-            'company_country' => [
-                'label' => 'Company Country',
-                'type' => 'select',
-                'description' => 'The country of your company. Used to apply the EU reverse charge on cross-border B2B invoices',
-                'options' => Countries::getNames('en'),
                 'section' => 'company',
             ],
             'company_vat' => [
