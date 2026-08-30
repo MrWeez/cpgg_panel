@@ -57,36 +57,60 @@ class StripeExtension extends PaymentExtension
         }
 
         $stripeClient = self::getStripeClient();
+
+        $currency = $shopProduct->currency_code;
+
+        $lineItems = [];
+
+        // Product subtotal (after discount) excluding tax and fee.
+        // Product + tax + fee must always equal the total price charged.
+        $productUnit = $totalPrice - (int) $payment->fee - (int) $payment->tax_value;
+
+        $lineItems[] = [
+            'price_data' => [
+                'currency' => $currency,
+                'product_data' => [
+                    'name' => $shopProduct->display,
+                    'description' => $shopProduct->description,
+                ],
+                'unit_amount' => self::convertAmount(max(0, $productUnit), $currency),
+            ],
+            'quantity' => 1,
+        ];
+
+        if ((int) $payment->tax_value > 0) {
+            $lineItems[] = [
+                'price_data' => [
+                    'currency' => $currency,
+                    'product_data' => [
+                        'name' => __('Tax'),
+                        'description' => $shopProduct->getTaxPercent() . '%',
+                    ],
+                    'unit_amount' => self::convertAmount((int) $payment->tax_value, $currency),
+                ],
+                'quantity' => 1,
+            ];
+        }
+
+        if ((int) $payment->fee > 0) {
+            $lineItems[] = [
+                'price_data' => [
+                    'currency' => $currency,
+                    'product_data' => [
+                        'name' => __('Payment fee'),
+                        'description' => __('Fee charged for using this payment method'),
+                    ],
+                    'unit_amount' => self::convertAmount((int) $payment->fee, $currency),
+                ],
+                'quantity' => 1,
+            ];
+        }
+
         $request = $stripeClient->checkout->sessions->create([
             'metadata' => [
                 'payment_id' => $payment->id,
             ],
-            'line_items' => [
-                [
-                    'price_data' => [
-                        'currency' => $shopProduct->currency_code,
-                        'product_data' => [
-                            'name' => $shopProduct->display,
-                            'description' => $shopProduct->description,
-                        ],
-                        'unit_amount' => self::convertAmount($totalPrice, $shopProduct->currency_code),
-                    ],
-                    'quantity' => 1,
-                ],
-                /* Removed due to errors in the coupon discount calculation. Its not used in other paymentgateways aswell and basically nice to have but unnessecary
-                [
-                    'price_data' => [
-                        'currency' => $shopProduct->currency_code,
-                        'product_data' => [
-                            'name' => __('Tax'),
-                            'description' => $shopProduct->getTaxPercent() . '%',
-                        ],
-                        'unit_amount_decimal' => round($shopProduct->getTaxValue(), 2),
-                    ],
-                    'quantity' => 1,
-                ],
-                */
-            ],
+            'line_items' => $lineItems,
 
             'mode' => 'payment',
             'success_url' => route('payment.StripeSuccess', ['payment' => $payment->id]) . '&session_id={CHECKOUT_SESSION_ID}',
