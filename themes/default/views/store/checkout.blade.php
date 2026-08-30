@@ -181,28 +181,6 @@
                                                 <span class="text-muted d-inline-block">
                                                     {{ Currency::formatToCurrency($product->price, $product->currency_code) }}</span>
                                             </li>
-                                            @if ($taxpercent > 0 && $taxvalue > 0)
-                                                <div class="d-flex justify-content-between">
-                                                    <span class="text-muted d-inline-block">{{ __('Tax') }}
-                                                        @if ($taxpercent > 0)
-                                                            ({{ $taxpercent }}%)
-                                                        @endif
-                                                    </span>
-                                                    <span class="text-muted d-inline-block">
-                                                        + {{ Currency::formatToCurrency($taxvalue, $product->currency_code) }}</span>
-                                                </div>
-                                            @endif
-                                            <div id="coupon_discount_details" class="d-flex justify-content-between"
-                                                style="display: none !important;">
-                                                <span class="text-muted d-inline-block">
-                                                    {{ __('Coupon Discount') }}
-                                                </span>
-                                                <span
-                                                    x-text="'- ' + (couponType == 'amount' ? formatToCurrency($currency.format(couponDiscountedValue)) : couponDiscountedValue + '%')"
-                                                    class="text-muted d-inline-block">
-
-                                                </span>
-                                            </div>
                                             @if ($discountpercent && $discountvalue)
                                                 <div class="d-flex justify-content-between">
                                                     <span class="text-muted d-inline-block">{{ __('Partner Discount') }}
@@ -212,6 +190,25 @@
                                                     </span>
                                                 </div>
                                             @endif
+                                            <div id="coupon_discount_details" class="d-flex justify-content-between"
+                                                style="display: none !important;">
+                                                <span class="text-muted d-inline-block">
+                                                    {{ __('Coupon Discount') }}
+                                                </span>
+                                                <span
+                                                    x-text="'- ' + formatToCurrency($currency.format(couponDiscountedAmount))"
+                                                    class="text-muted d-inline-block">
+
+                                                </span>
+                                            </div>
+                                            <template x-if="taxPercent > 0 && taxValue > 0">
+                                                <div class="d-flex justify-content-between">
+                                                    <span class="text-muted d-inline-block">{{ __('Tax') }}
+                                                        (<span x-text="taxPercent"></span>%)</span>
+                                                    <span class="text-muted d-inline-block"
+                                                        x-text="'+ ' + formatToCurrency($currency.format(taxValue))"></span>
+                                                </div>
+                                            </template>
                                             <template x-if="payment_method && !isFreeAfterCoupon">
                                                 <div class="d-flex justify-content-between">
                                                     <span class="text-muted d-inline-block">{{ __('Pay with') }}</span>
@@ -270,14 +267,26 @@
                 coupon_code: '',
                 appliedCouponCode: '',
                 submitted: false,
-                baseTotalPrice: {{ $total }},
-                totalPrice: {{ $total }},
+                basePriceAfterDiscount: {{ $discountedprice }},
+                totalPrice: {{ $discountedprice }},
+                taxPercent: {{ $taxpercent }},
                 feeConfigs: @json($gatewayFeeConfigs),
                 couponType: null,
                 couponDiscountedValue: 0,
+                couponDiscountedAmount: 0,
 
                 get isFreeAfterCoupon() {
                     return this.productIsFreeFromServer || Number(this.totalPrice) <= 0;
+                },
+
+                // Tax in thousandths, recalculated on the price after all discounts.
+                get taxValue() {
+                    return Math.round(this.totalPrice * this.taxPercent / 100);
+                },
+
+                // Product price after all discounts plus tax, before the payment fee.
+                get subtotalWithTax() {
+                    return this.totalPrice + this.taxValue;
                 },
 
                 get selectedFeeConfig() {
@@ -287,7 +296,7 @@
                     return this.feeConfigs[this.payment_method] || null;
                 },
 
-                // Payment fee in thousandths, based on the current (post-coupon) total.
+                // Payment fee in thousandths, based on the subtotal including tax.
                 get paymentFee() {
                     const cfg = this.selectedFeeConfig;
                     if (!cfg || cfg.type === 'none') {
@@ -300,7 +309,7 @@
 
                     if (cfg.type === 'percent') {
                         const percent = Number(cfg.percent || 0);
-                        let fee = this.totalPrice * percent / 100;
+                        let fee = this.subtotalWithTax * percent / 100;
                         const min = Number(cfg.min || 0);
                         const max = Number(cfg.max || 0);
 
@@ -318,7 +327,7 @@
                 },
 
                 get totalWithFee() {
-                    return this.totalPrice + this.paymentFee;
+                    return this.subtotalWithTax + this.paymentFee;
                 },
 
                 get canSubmitPayment() {
@@ -337,9 +346,10 @@
                 },
 
                 clearCoupon() {
-                    this.totalPrice = this.baseTotalPrice
+                    this.totalPrice = this.basePriceAfterDiscount
                     this.couponType = null
                     this.couponDiscountedValue = 0
+                    this.couponDiscountedAmount = 0
                     this.appliedCouponCode = ''
                     this.coupon_code = ''
                     $('#coupon_discount_details').hide()
@@ -392,7 +402,7 @@
                 },
 
                 calcPriceWithCouponDiscount(couponValue, couponType) {
-                    let newTotalPrice = this.baseTotalPrice
+                    let newTotalPrice = this.basePriceAfterDiscount
 
                     if (couponType === 'percentage') {
                         newTotalPrice = newTotalPrice - (newTotalPrice * couponValue / 100)
@@ -404,6 +414,7 @@
 
                     this.couponType = couponType
                     this.couponDiscountedValue = couponValue
+                    this.couponDiscountedAmount = Math.max(0, this.basePriceAfterDiscount - newTotalPrice)
                     this.totalPrice = newTotalPrice
                     if (Number(this.totalPrice) <= 0) {
                         this.payment_method = null

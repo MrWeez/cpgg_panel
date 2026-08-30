@@ -176,20 +176,24 @@ class PaymentController extends Controller
             $paymentGateway = $request->input('payment_method');
             $couponCode = $request->input('coupon_code');
 
-            $subtotal = $shopProduct->getTotalPrice();
+            $discountedPrice = $shopProduct->getPriceAfterDiscount();
 
-            // Apply Coupon
+            // Apply Coupon to the pre-tax discounted price. The tax is
+            // recalculated afterwards, so the total is price - discount + tax + fee.
             if ($couponCode) {
                 if ($this->isCouponValid($couponCode, $user, $shopProduct->id)) {
-                    $subtotal = $this->applyCoupon($couponCode, $subtotal);
+                    $discountedPrice = $this->applyCoupon($couponCode, $discountedPrice);
                 } else {
                     $couponCode = null;
                 }
             }
 
-            if ($subtotal <= 0) {
+            if ($discountedPrice <= 0) {
                 return $this->handleFreeProduct($shopProduct, $general_settings, $couponCode);
             }
+
+            $taxValue = $discountedPrice * $shopProduct->getTaxPercent() / 100;
+            $subtotal = $discountedPrice + $taxValue;
 
             $enabledPaymentGateways = [];
             $extensions = ExtensionHelper::getAllExtensionsByNamespace('PaymentGateways');
@@ -233,7 +237,7 @@ class PaymentController extends Controller
                 'status' => PaymentStatus::OPEN,
                 'amount' => $shopProduct->quantity,
                 'price' => $shopProduct->price,
-                'tax_value' => $shopProduct->getTaxValue(),
+                'tax_value' => $taxValue,
                 'tax_percent' => $shopProduct->getTaxPercent(),
                 'total_price' => $totalPrice,
                 'fee' => $fee,
