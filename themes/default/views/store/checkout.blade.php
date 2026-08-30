@@ -41,30 +41,39 @@
                                                 <div class="col-lg-12">
                                                     <span class="h4">{{ __('Payment Methods') }}</span>
                                                     <div class="mt-2">
-                                                        @foreach ($paymentGateways as $gateway)
-                                                            <div
-                                                                class="row checkout-gateways @if (!$loop->last) mb-2 @endif">
-                                                                <div class="col-12 d-flex justify-content-between">
-                                                                    <label
-                                                                        class="form-check-label h5 checkout-gateway-label @if (!$gateway->available) text-muted @endif"
-                                                                        for="{{ $gateway->name }}">
-                                                                        <span class="mr-3">{{ $gateway->name }}</span>
-                                                                    </label>
-                                                                    <span @if (!$gateway->available) data-toggle="popover"
-                                                                            data-trigger="hover"
-                                                                            data-placement="top"
-                                                                            data-content="{{ $gateway->unavailable_reason }}" @endif>
-                                                                        <button class="rounded btn btn-primary @if (!$gateway->available) disabled @endif" type="button"
-                                                                            id="{{ $gateway->name }}"
-                                                                            value="{{ $gateway->name }}"
-                                                                            :class="payment_method === '{{ $gateway->name }}' ?
-                                                                                'active' : ''"
-                                                                            :disabled="isFreeAfterCoupon || {{ $gateway->available ? 'false' : 'true' }}"
-                                                                            @click="payment_method = '{{ $gateway->name }}'; submitted = true;"
-                                                                            x-text="payment_method == '{{ $gateway->name }}' ? 'Selected' : 'Select'">Select</button>
-                                                                    </span>
+@foreach ($paymentGateways as $gateway)
+                                                                    <div
+                                                                        class="row checkout-gateways @if (!$loop->last) mb-2 @endif">
+                                                                    <div class="col-12 d-flex justify-content-between align-items-center">
+                                                                        <div class="d-flex flex-column">
+                                                                            <label
+                                                                                class="form-check-label h5 checkout-gateway-label mb-0 @if (!$gateway->available) text-muted @endif"
+                                                                                for="{{ $gateway->name }}">
+                                                                                <span class="mr-3">{{ $gateway->name }}</span>
+                                                                            </label>
+                                                                            @if ($gateway->fee_description)
+                                                                                <small class="text-muted checkout-gateway-fee">
+                                                                                    <i class="mr-1 fas fa-info-circle"></i>
+                                                                                    {{ __('Payment fee') }}:
+                                                                                    {{ $gateway->fee_description }}
+                                                                                </small>
+                                                                            @endif
+                                                                        </div>
+                                                                        <span @if (!$gateway->available) data-toggle="popover"
+                                                                                data-trigger="hover"
+                                                                                data-placement="top"
+                                                                                data-content="{{ $gateway->unavailable_reason }}" @endif>
+                                                                            <button class="rounded btn btn-primary @if (!$gateway->available) disabled @endif" type="button"
+                                                                                id="{{ $gateway->name }}"
+                                                                                value="{{ $gateway->name }}"
+                                                                                :class="payment_method === '{{ $gateway->name }}' ?
+                                                                                    'active' : ''"
+                                                                                :disabled="isFreeAfterCoupon || {{ $gateway->available ? 'false' : 'true' }}"
+                                                                                @click="payment_method = '{{ $gateway->name }}'; submitted = true;"
+                                                                                x-text="payment_method == '{{ $gateway->name }}' ? 'Selected' : 'Select'">Select</button>
+                                                                        </span>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
                                                         @endforeach
                                                     </div>
                                                 </div>
@@ -203,14 +212,6 @@
                                                     </span>
                                                 </div>
                                             @endif
-                                            <hr class="text-white border-secondary">
-                                            <div class="d-flex justify-content-between">
-                                                <span class="text-muted d-inline-block">{{ __('Total') }}</span>
-                                                <input id="total_price_input" type="hidden" x-model="totalPrice">
-                                                <span class="text-muted d-inline-block"
-                                                    x-text="formatToCurrency($currency.format(totalPrice))">
-                                                </span>
-                                            </div>
                                             <template x-if="payment_method && !isFreeAfterCoupon">
                                                 <div class="d-flex justify-content-between">
                                                     <span class="text-muted d-inline-block">{{ __('Pay with') }}</span>
@@ -218,6 +219,21 @@
                                                         x-text="payment_method"></span>
                                                 </div>
                                             </template>
+                                            <template x-if="payment_method && !isFreeAfterCoupon && paymentFee > 0">
+                                                <div class="d-flex justify-content-between">
+                                                    <span class="text-muted d-inline-block">{{ __('Payment fee') }}</span>
+                                                    <span class="text-muted d-inline-block"
+                                                        x-text="formatToCurrency($currency.format(paymentFee))"></span>
+                                                </div>
+                                            </template>
+                                            <hr class="text-white border-secondary">
+                                            <div class="d-flex justify-content-between">
+                                                <span class="text-muted d-inline-block">{{ __('Total') }}</span>
+                                                <input id="total_price_input" type="hidden" x-model="totalWithFee">
+                                                <span class="text-muted d-inline-block"
+                                                    x-text="formatToCurrency($currency.format(totalWithFee))">
+                                                </span>
+                                            </div>
                                         </ul>
                                     </li>
                                 </ul>
@@ -256,11 +272,53 @@
                 submitted: false,
                 baseTotalPrice: {{ $total }},
                 totalPrice: {{ $total }},
+                feeConfigs: @json($gatewayFeeConfigs),
                 couponType: null,
                 couponDiscountedValue: 0,
 
                 get isFreeAfterCoupon() {
                     return this.productIsFreeFromServer || Number(this.totalPrice) <= 0;
+                },
+
+                get selectedFeeConfig() {
+                    if (!this.payment_method) {
+                        return null;
+                    }
+                    return this.feeConfigs[this.payment_method] || null;
+                },
+
+                // Payment fee in thousandths, based on the current (post-coupon) total.
+                get paymentFee() {
+                    const cfg = this.selectedFeeConfig;
+                    if (!cfg || cfg.type === 'none') {
+                        return 0;
+                    }
+
+                    if (cfg.type === 'fixed') {
+                        return Number(cfg.fixed || 0);
+                    }
+
+                    if (cfg.type === 'percent') {
+                        const percent = Number(cfg.percent || 0);
+                        let fee = this.totalPrice * percent / 100;
+                        const min = Number(cfg.min || 0);
+                        const max = Number(cfg.max || 0);
+
+                        if (min > 0 && fee < min) {
+                            fee = min;
+                        }
+                        if (max > 0 && fee > max) {
+                            fee = max;
+                        }
+
+                        return Math.round(fee);
+                    }
+
+                    return 0;
+                },
+
+                get totalWithFee() {
+                    return this.totalPrice + this.paymentFee;
                 },
 
                 get canSubmitPayment() {

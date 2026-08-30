@@ -91,8 +91,16 @@ class PaymentController extends Controller
                     $payment->unavailable_reason = $availability['reason'];
                 }
 
+                $payment->fee_config = $extensionClass::getFeeConfig();
+                $payment->fee_description = $extensionClass::getFeeDescription($shopProduct->currency_code);
+
                 $paymentGateways[] = $payment;
             }
+        }
+
+        $gatewayFeeConfigs = [];
+        foreach ($paymentGateways as $gateway) {
+            $gatewayFeeConfigs[$gateway->name] = $gateway->fee_config ?? [];
         }
 
         return view('store.checkout')->with([
@@ -104,6 +112,7 @@ class PaymentController extends Controller
             'taxpercent' => $shopProduct->getTaxPercent(),
             'total' => $shopProduct->getTotalPrice(),
             'paymentGateways'   => $paymentGateways,
+            'gatewayFeeConfigs' => $gatewayFeeConfigs,
             'productIsFree' => $price <= 0,
             'credits_display_name' => $general_settings->credits_display_name,
             'isCouponsEnabled' => $coupon_settings->enabled,
@@ -210,6 +219,11 @@ class PaymentController extends Controller
                 return redirect()->route('checkout', $shopProduct)->with('error', $availability['reason']);
             }
 
+            // Calculate the payment processing fee for this gateway and charge it
+            // on top of the product total.
+            $fee = $paymentGatewayExtension::getPaymentFee((int) $subtotal, $shopProduct->currency_code);
+            $totalPrice = $subtotal + $fee;
+
             // create a new payment
             $payment = Payment::create([
                 'user_id' => $user->id,
@@ -221,13 +235,14 @@ class PaymentController extends Controller
                 'price' => $shopProduct->price,
                 'tax_value' => $shopProduct->getTaxValue(),
                 'tax_percent' => $shopProduct->getTaxPercent(),
-                'total_price' => $subtotal,
+                'total_price' => $totalPrice,
+                'fee' => $fee,
                 'currency_code' => $shopProduct->currency_code,
                 'shop_item_product_id' => $shopProduct->id,
                 'coupon_code' => $couponCode,
             ]);
 
-            $redirectUrl = $paymentGatewayExtension::getRedirectUrl($payment, $shopProduct, $subtotal);
+            $redirectUrl = $paymentGatewayExtension::getRedirectUrl($payment, $shopProduct, $totalPrice);
 
         } catch (Exception $e) {
             Log::error('Payment checkout failed', [
@@ -283,6 +298,9 @@ class PaymentController extends Controller
             })
             ->editColumn('total_price', function (Payment $payment, CurrencyHelper $currencyHelper) {
                 return $currencyHelper->formatToCurrency($payment->total_price, $payment->currency_code);
+            })
+            ->editColumn('fee', function (Payment $payment, CurrencyHelper $currencyHelper) {
+                return (int) $payment->fee > 0 ? $currencyHelper->formatToCurrency($payment->fee, $payment->currency_code) : '-';
             })
             ->editColumn('created_at', function (Payment $payment) {
                 return [
