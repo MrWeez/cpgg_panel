@@ -154,6 +154,10 @@
 </head>
 
 <body>
+    @php
+        $customData = $invoice->getCustomData() ?? [];
+    @endphp
+
     {{-- Header --}}
     @if($invoice->logo)
         <img src="{{ $invoice->getLogo() }}" alt="logo" height="100">
@@ -176,12 +180,48 @@
                     @endif
                     <p>{{ __('Serial No.') }} <strong>{{ $invoice->getSerialNumber() }}</strong></p>
                     <p>{{ __('Invoice date') }}: <strong>{{ $invoice->getDate() }}</strong></p>
+                    @if($customData['supply_date'] ?? false)
+                        <p>{{ __('Date of supply') }}: <strong>{{ $customData['supply_date'] }}</strong></p>
+                    @endif
+                    @if($invoice->status !== __('paid') && $invoice->getPayUntilDate())
+                        <p>{{ __('Due date') }}: <strong>{{ $invoice->getPayUntilDate() }}</strong></p>
+                    @endif
                 </td>
             </tr>
         </tbody>
     </table>
 
     {{-- Seller - Buyer --}}
+    @php
+        // Compose the buyer address according to regional conventions.
+        $buyer = $invoice->buyer;
+        $buyerCountry = $buyer->country_code ? strtoupper((string) $buyer->country_code) : null;
+        $buyerAddressLines = [];
+        if (!blank($buyer->street)) {
+            $buyerAddressLines[] = $buyer->street;
+        }
+        $cityAndState = trim(($buyer->city ?? '') . ($buyer->state ? ', ' . $buyer->state : ''));
+        $postalCity = trim(($buyer->code ?? '') . ' ' . ($buyer->city ?? ''));
+        if (in_array($buyerCountry, ['US', 'CA'], true)) {
+            // 123 Main St, Springfield, IL 62704
+            if ($cityAndState !== '') {
+                $buyerAddressLines[] = $cityAndState . (blank($buyer->code) ? '' : ' ' . $buyer->code);
+            }
+        } else {
+            // Hauptstraße 1, 10115 Berlin
+            if ($postalCity !== '') {
+                $buyerAddressLines[] = $postalCity;
+            }
+            if (!blank($buyer->state)) {
+                $buyerAddressLines[] = $buyer->state;
+            }
+        }
+        if (!blank($buyer->country)) {
+            $buyerAddressLines[] = $buyer->country;
+        }
+        $buyerAddress = implode('<br>', $buyerAddressLines);
+    @endphp
+
     <table class="table">
         <thead>
             <tr>
@@ -205,19 +245,13 @@
 
                     @if($invoice->seller->address)
                         <p class="seller-address">
-                            {{ __('Address') }}: {{ $invoice->seller->address }}
-                        </p>
-                    @endif
-
-                    @if($invoice->seller->code)
-                        <p class="seller-code">
-                            {{ __('Code') }}: {{ $invoice->seller->code }}
+                            {{ $invoice->seller->address }}
                         </p>
                     @endif
 
                     @if($invoice->seller->vat)
                         <p class="seller-vat">
-                            {{ __('VAT Code') }}: {{ $invoice->seller->vat }}
+                            {{ __('VAT ID') }}: {{ $invoice->seller->vat }}
                         </p>
                     @endif
 
@@ -241,21 +275,21 @@
                         </p>
                     @endif
 
-                    @if($invoice->buyer->adress)
+                    @if($buyerAddress !== '')
                         <p class="buyer-address">
-                            {{ __('Address') }}: {{ $invoice->buyer->address }}
-                        </p>
-                    @endif
-
-                    @if($invoice->buyer->code)
-                        <p class="buyer-code">
-                            {{ __('Code') }}: {{ $invoice->buyer->code }}
+                            {!! $buyerAddress !!}
                         </p>
                     @endif
 
                     @if($invoice->buyer->vat)
                         <p class="buyer-vat">
-                            {{ __('VAT Code') }}: {{ $invoice->buyer->vat }}
+                            {{ __('VAT ID') }}: {{ $invoice->buyer->vat }}
+                        </p>
+                    @endif
+
+                    @if($customData['reverse_charge'] ?? false)
+                        <p class="buyer-reverse-charge">
+                            <strong>{{ __('Reverse charge') }}:</strong> {{ __('VAT to be accounted for by the customer') }}
                         </p>
                     @endif
 
@@ -334,7 +368,7 @@
                     <td colspan="{{ $invoice->table_columns - 2 }}" class="border-0"></td>
                     <td class="text-right pl-0">{{ __('Total discount') }}</td>
                     <td class="text-right pr-0">
-                        {{ $invoice->formatCurrency($invoice->total_discount) }}
+                        -{{ $invoice->formatCurrency($invoice->total_discount) }}
                     </td>
                 </tr>
             @endif
@@ -368,7 +402,7 @@
             @if($invoice->shipping_amount)
                 <tr>
                     <td colspan="{{ $invoice->table_columns - 2 }}" class="border-0"></td>
-                    <td class="text-right pl-0">{{ __('Shipping') }}</td>
+                    <td class="text-right pl-0">{{ __('Payment fee') }}</td>
                     <td class="text-right pr-0">
                         {{ $invoice->formatCurrency($invoice->shipping_amount) }}
                     </td>

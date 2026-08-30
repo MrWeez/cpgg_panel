@@ -3,6 +3,7 @@
 namespace App\Settings;
 
 use Spatie\LaravelSettings\Settings;
+use Symfony\Component\Intl\Countries;
 
 class InvoiceSettings extends Settings
 {
@@ -13,6 +14,7 @@ class InvoiceSettings extends Settings
     public ?string $company_phone = null;
     public ?string $company_vat = null;
     public ?string $company_website = null;
+    public ?string $company_country = null;
     public ?string $prefix = 'INV-';
     public ?string $additional_notes = null;
 
@@ -36,6 +38,7 @@ class InvoiceSettings extends Settings
             'company_phone' => 'nullable|string',
             'company_vat' => 'nullable|string',
             'company_website' => 'nullable|string',
+            'company_country' => 'nullable|string|size:2',
             'prefix' => 'nullable|string',
             'additional_notes' => 'nullable|string',
         ];
@@ -92,15 +95,22 @@ class InvoiceSettings extends Settings
                 'section' => 'company',
             ],
             'company_mail' => [
-                'label' => 'Company Mail',
+                'label' => 'Company Email',
                 'type' => 'string',
-                'description' => 'The mail of your company',
+                'description' => 'The email of your company',
                 'section' => 'company',
             ],
             'company_website' => [
                 'label' => 'Company Website',
                 'type' => 'string',
                 'description' => 'The website of your company',
+                'section' => 'company',
+            ],
+            'company_country' => [
+                'label' => 'Company Country',
+                'type' => 'select',
+                'description' => 'The country of your company. Used to apply the EU reverse charge on cross-border B2B invoices',
+                'options' => Countries::getNames('en'),
                 'section' => 'company',
             ],
             'company_vat' => [
