@@ -25,4 +25,14 @@ abstract class AbstractExtension
     {
         return [];
     }
+
+    /**
+     * Get the middleware this extension wants to register with the application.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function getMiddleware(): array
+    {
+        return [];
+    }
 }

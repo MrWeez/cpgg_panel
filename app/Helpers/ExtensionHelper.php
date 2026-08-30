@@ -17,6 +17,10 @@ class ExtensionHelper
 {
     private const VALID_SEGMENT_PATTERN = '/^[A-Za-z][A-Za-z0-9_]*$/';
 
+    private const MIDDLEWARE_ALIAS_PATTERN = '/^[A-Za-z_][A-Za-z0-9_.-]*$/';
+
+    private const MIDDLEWARE_GROUP_PATTERN = '/^[A-Za-z_][A-Za-z0-9_-]*$/';
+
     private const CSRF_ALLOWED_PREFIXES = [
         'payment/',
         'extensions/',
@@ -364,6 +368,99 @@ class ExtensionHelper
         }
 
         return $permissions;
+    }
+
+    /**
+     * Get all middleware registered by extensions.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function getAllExtensionMiddleware(): array
+    {
+        $middleware = [];
+
+        foreach (self::getAllExtensionClasses() as $extensionClass) {
+            if (!is_callable([$extensionClass, 'getMiddleware'])) {
+                continue;
+            }
+
+            try {
+                $definitions = $extensionClass::getMiddleware();
+            } catch (Throwable $exception) {
+                Log::warning('Failed to load middleware for extension.', [
+                    'extension' => $extensionClass,
+                    'error' => $exception->getMessage(),
+                ]);
+                continue;
+            }
+
+            if (!is_array($definitions)) {
+                continue;
+            }
+
+            foreach ($definitions as $definition) {
+                $normalized = self::normalizeMiddlewareDefinition($definition, $extensionClass);
+                if ($normalized !== null) {
+                    $middleware[] = $normalized;
+                }
+            }
+        }
+
+        return $middleware;
+    }
+
+    /**
+     * Normalize and validate a raw middleware definition.
+     *
+     * @param mixed $definition
+     * @return array<string, mixed>|null
+     */
+    private static function normalizeMiddlewareDefinition(mixed $definition, string $extensionClass): ?array
+    {
+        if (!is_array($definition)) {
+            self::warnInvalidMiddleware($extensionClass, 'Middleware definition must be an array.');
+
+            return null;
+        }
+
+        $class = $definition['class'] ?? null;
+        if (!is_string($class) || $class === '' || !class_exists($class) || !method_exists($class, 'handle')) {
+            self::warnInvalidMiddleware($extensionClass, 'Middleware class must be a resolvable class with a handle() method.');
+
+            return null;
+        }
+
+        $alias = $definition['alias'] ?? null;
+        if ($alias !== null && (!is_string($alias) || preg_match(self::MIDDLEWARE_ALIAS_PATTERN, $alias) !== 1)) {
+            self::warnInvalidMiddleware($extensionClass, sprintf('Invalid middleware alias [%s].', is_string($alias) ? $alias : gettype($alias)));
+
+            return null;
+        }
+
+        $groups = [];
+        foreach ((array) ($definition['groups'] ?? []) as $group) {
+            if (is_string($group) && preg_match(self::MIDDLEWARE_GROUP_PATTERN, $group) === 1) {
+                $groups[] = $group;
+            }
+        }
+
+        $position = (($definition['position'] ?? 'append') === 'prepend') ? 'prepend' : 'append';
+
+        return [
+            'class' => $class,
+            'alias' => $alias,
+            'groups' => array_values(array_unique($groups)),
+            'global' => (bool) ($definition['global'] ?? false),
+            'position' => $position,
+        ];
+    }
+
+    private static function warnInvalidMiddleware(string $extensionClass, string $reason): void
+    {
+        Log::warning('Skipped invalid middleware from extension.', [
+            'extension' => $extensionClass,
+            'reason' => $reason,
+        ]);
     }
 
     /**

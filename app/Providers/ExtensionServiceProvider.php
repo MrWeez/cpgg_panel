@@ -91,6 +91,9 @@ class ExtensionServiceProvider extends ServiceProvider
             }
         }
 
+        // Register Extension Middleware
+        $this->registerExtensionMiddleware();
+
         // Boot Extension Schedules
         if ($this->app->runningInConsole()) {
             $this->app->booted(function () {
@@ -111,6 +114,41 @@ class ExtensionServiceProvider extends ServiceProvider
                 require $path;
             });
         });
+    }
+
+    /**
+     * Register middleware declared by extensions, either globally, in a middleware
+     * group, or as a route middleware alias.
+     */
+    protected function registerExtensionMiddleware(): void
+    {
+        $router = $this->app->make(\Illuminate\Routing\Router::class);
+        $kernel = $this->app->make(\Illuminate\Foundation\Http\Kernel::class);
+
+        foreach (\App\Helpers\ExtensionHelper::getAllExtensionMiddleware() as $middleware) {
+            $class = $middleware['class'];
+            $position = $middleware['position'];
+
+            if ($middleware['global']) {
+                if ($position === 'prepend') {
+                    $kernel->prependMiddleware($class);
+                } else {
+                    $kernel->pushMiddleware($class);
+                }
+            }
+
+            foreach ($middleware['groups'] as $group) {
+                if ($position === 'prepend') {
+                    $router->prependMiddlewareToGroup($group, $class);
+                } else {
+                    $router->pushMiddlewareToGroup($group, $class);
+                }
+            }
+
+            if ($middleware['alias'] !== null) {
+                $router->aliasMiddleware($middleware['alias'], $class);
+            }
+        }
     }
 
     /**
