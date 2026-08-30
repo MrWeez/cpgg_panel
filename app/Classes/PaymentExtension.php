@@ -19,6 +19,57 @@ abstract class PaymentExtension extends AbstractExtension
     abstract public static function getRedirectUrl(Payment $payment, ShopProduct $shopProduct, int $totalPrice): string;
 
     /**
+     * Returns the list of ISO 4217 currency codes this gateway accepts for checkout,
+     * or null to allow every currency.
+     *
+     * @return array<int, string>|null
+     */
+    public static function getSupportedCurrencies(): ?array
+    {
+        return null;
+    }
+
+    /**
+     * Returns the minimum order value required by this gateway for the given currency,
+     * in the currency's display units, or null if this gateway has no minimum.
+     */
+    public static function getMinimumPrice(string $currencyCode): ?float
+    {
+        return null;
+    }
+
+    /**
+     * Determines whether this gateway can be used for a checkout with the given currency
+     * and total price (in the currency's display units).
+     *
+     * @return array{available: bool, reason: string|null}
+     */
+    public static function isAvailableForCheckout(string $currencyCode, float $totalPrice): array
+    {
+        $currency = strtoupper($currencyCode);
+
+        $supportedCurrencies = static::getSupportedCurrencies();
+        if (is_array($supportedCurrencies) && !in_array($currency, $supportedCurrencies, true)) {
+            return [
+                'available' => false,
+                'reason' => __('This payment gateway does not support the :currency currency', ['currency' => $currency]),
+            ];
+        }
+
+        $minimum = static::getMinimumPrice($currency);
+        if ($minimum !== null && $totalPrice < $minimum) {
+            $formattedMinimum = resolve(CurrencyHelper::class)->formatToCurrency((int) round($minimum * 1000), $currency);
+
+            return [
+                'available' => false,
+                'reason' => __('This payment gateway requires a minimum order of :amount', ['amount' => $formattedMinimum]),
+            ];
+        }
+
+        return ['available' => true, 'reason' => null];
+    }
+
+    /**
      * Returns true if the payment gateway supports rechecking the payment status
      */
     public static function supportsRecheck(): bool

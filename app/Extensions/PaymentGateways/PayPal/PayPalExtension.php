@@ -41,6 +41,20 @@ class PayPalExtension extends PaymentExtension
         ];
     }
 
+    /**
+     * Currencies supported by PayPal for payments and account balances.
+     *
+     * @return array<int, string>
+     */
+    public static function getSupportedCurrencies(): array
+    {
+        return [
+            'AUD', 'BRL', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD',
+            'HUF', 'ILS', 'JPY', 'MXN', 'MYR', 'NOK', 'NZD', 'PHP', 'PLN', 'SEK',
+            'SGD', 'THB', 'TWD', 'USD',
+        ];
+    }
+
     public static function getRedirectUrl(Payment $payment, ShopProduct $shopProduct, int $totalPrice): string
     {
         $currencyHelper = self::currencyHelper();
