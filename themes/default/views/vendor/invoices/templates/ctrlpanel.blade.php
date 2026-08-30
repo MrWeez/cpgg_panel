@@ -290,11 +290,12 @@
                         </p>
                     @endif
 
-                    @if($customData['reverse_charge'] ?? false)
+                    {{-- Reverse charge block disabled alongside the feature. --}}
+                    {{-- @if($customData['reverse_charge'] ?? false)
                         <p class="buyer-reverse-charge">
                             <strong>{{ __('Reverse charge') }}:</strong> {{ __('VAT to be accounted for by the customer') }}
                         </p>
-                    @endif
+                    @endif --}}
 
                     @if($invoice->buyer->phone)
                         <p class="buyer-phone">

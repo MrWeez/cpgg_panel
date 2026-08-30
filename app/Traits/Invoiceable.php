@@ -97,15 +97,19 @@ trait Invoiceable
 
         $customer = new Buyer($customerData);
 
-        // EU reverse charge (Art. 196 Directive 2006/112/EC): cross-border B2B
-        // supply between EU businesses. VAT is not charged; the customer is
-        // liable to account for it instead. Requires both parties to be EU
-        // businesses in different member states.
-        $sellerCountry = strtoupper((string) $invoice_settings->company_country);
-        $isReverseCharge = !blank($user->vat_number)
-            && $this->isEUCountry($countryCode)
-            && $this->isEUCountry($sellerCountry)
-            && $sellerCountry !== $countryCode;
+        // NOTE: EU reverse charge (Art. 196 Directive 2006/112/EC) is disabled
+        // for now. It required correct cross-border B2B VAT handling between EU
+        // member states, which proved too complex to maintain reliably in a
+        // generic worldwide tax engine (VIES validation, per-country rates, OSS
+        // thresholds, buyer/seller type detection, ...). It may return as a
+        // configurable rule once a proper tax rule engine is built. The original
+        // logic is kept below for future reference:
+        //
+        // $sellerCountry = strtoupper((string) $sellerCountryCode);
+        // $isReverseCharge = !blank($user->vat_number)
+        //     && $this->isEUCountry($countryCode)
+        //     && $this->isEUCountry($sellerCountry)
+        //     && $sellerCountry !== $countryCode;
 
         // The date of supply (Art. 226(6)) for instantly delivered digital
         // goods equals the moment the payment was confirmed.
@@ -141,9 +145,7 @@ trait Invoiceable
             $notes[] = $invoice_settings->additional_notes;
         }
 
-        if ($isReverseCharge) {
-            $notes[] = __("Reverse charge") . ": " . __("VAT to be accounted for by the customer");
-        }
+        // Reverse charge note removed alongside the reverse charge logic above.
 
         $notes = implode("<br>", $notes);
 
@@ -169,13 +171,10 @@ trait Invoiceable
             ->currencyFormat($region['currency_format'])
             ->setCustomData([
                 'supply_date' => $supplyDate->format($region['date_format']),
-                'reverse_charge' => $isReverseCharge,
             ])
             ->notes("<br/>" . $notes);
 
-        if (!$isReverseCharge) {
-            $invoice->taxRate(floatval($payment->tax_percent));
-        }
+        $invoice->taxRate(floatval($payment->tax_percent));
 
         if ($discountAmount > 0) {
             $invoice->totalDiscount($discountAmount / 1000);
@@ -204,22 +203,26 @@ trait Invoiceable
         $user->notify(new InvoiceNotification($invoice->filename, $user, $payment));
     }
 
-    /**
-     * Whether the given country code is an EU member state.
-     *
-     * @param  string  $countryCode
-     * @return bool
-     */
-    private function isEUCountry(?string $countryCode): bool
-    {
-        $euCountries = [
-            'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE',
-            'GR', 'EL', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL',
-            'PT', 'RO', 'SK', 'SI', 'ES', 'SE',
-        ];
-
-        return in_array(strtoupper((string) $countryCode), $euCountries, true);
-    }
+    // NOTE: The EU reverse charge feature is disabled for now (see the note in
+    // createInvoice above). This helper was only used by it and is kept here
+    // commented out for future reference when a proper tax rule engine is built.
+    //
+    // /**
+    //  * Whether the given country code is an EU member state.
+    //  *
+    //  * @param  string  $countryCode
+    //  * @return bool
+    //  */
+    // private function isEUCountry(?string $countryCode): bool
+    // {
+    //     $euCountries = [
+    //         'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE',
+    //         'GR', 'EL', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL',
+    //         'PT', 'RO', 'SK', 'SI', 'ES', 'SE',
+    //     ];
+    //
+    //     return in_array(strtoupper((string) $countryCode), $euCountries, true);
+    // }
 
     /**
      * Resolve the date/currency formatting for the buyer's region.
