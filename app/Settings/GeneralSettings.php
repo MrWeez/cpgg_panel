@@ -162,7 +162,7 @@ class GeneralSettings extends Settings
                 'section' => 'recaptcha',
             ],
             'recaptcha_secret_key' => [
-                'type' => 'string',
+                'type' => 'secret',
                 'label' => 'reCAPTCHA Secret Key',
                 'description' => 'The secret key for reCAPTCHA',
                 'section' => 'recaptcha',
