@@ -45,6 +45,7 @@
                                 <th>{{ __('Tax Value') }}</th>
                                 <th>{{ __('Tax Percentage') }}</th>
                                 <th>{{ __('Total Price') }}</th>
+                                <th>{{ __('Fee') }}</th>
                                 <th>{{ __('Payment ID') }}</th>
                                 <th>{{ __('Payment Method') }}</th>
                                 <th>{{ __('Status') }}</th>
@@ -96,7 +97,7 @@
                 serverSide: true,
                 stateSave: true,
                 ajax: "{{ route('admin.payments.datatable') }}",
-                order: [[ 10, "desc" ]],
+                order: [[ 11, "desc" ]],
                 columns: [
                     {data: 'id',name: 'payments.id'},
                     {data: 'type'},
@@ -106,6 +107,7 @@
                     {data: 'tax_value'},
                     {data: 'tax_percent'},
                     {data: 'total_price'},
+                    {data: 'fee'},
                     {data: 'payment_id'},
                     {data: 'payment_method'},
                     {data: 'status'},

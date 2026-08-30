@@ -60,7 +60,43 @@ class PayPalExtension extends PaymentExtension
         $currencyHelper = self::currencyHelper();
         $totalPriceFormatted = $currencyHelper->formatForForm($totalPrice, 2);
 
+        $currencyCode = strtoupper($shopProduct->currency_code);
 
+        // Itemize the purchase unit into product, tax and fee line items.
+        // item_total must equal the sum of all items; amount.value must equal item_total.
+        $productUnit = max(0, $totalPrice - (int) $payment->fee - (int) $payment->tax_value);
+
+        $items = [];
+        $items[] = [
+            'name' => $shopProduct->display,
+            'unit_amount' => [
+                'currency_code' => $currencyCode,
+                'value' => $currencyHelper->formatForForm($productUnit, 2),
+            ],
+            'quantity' => '1',
+        ];
+
+        if ((int) $payment->tax_value > 0) {
+            $items[] = [
+                'name' => __('Tax'),
+                'unit_amount' => [
+                    'currency_code' => $currencyCode,
+                    'value' => $currencyHelper->formatForForm((int) $payment->tax_value, 2),
+                ],
+                'quantity' => '1',
+            ];
+        }
+
+        if ((int) $payment->fee > 0) {
+            $items[] = [
+                'name' => __('Payment fee'),
+                'unit_amount' => [
+                    'currency_code' => $currencyCode,
+                    'value' => $currencyHelper->formatForForm((int) $payment->fee, 2),
+                ],
+                'quantity' => '1',
+            ];
+        }
 
         $request = new OrdersCreateRequest();
         $request->prefer('return=representation');
@@ -71,23 +107,16 @@ class PayPalExtension extends PaymentExtension
                     "reference_id" => (string) $payment->id,
                     'custom_id' => (string) $payment->id,
                     "description" => $shopProduct->display,
+                    "items" => $items,
                     "amount" => [
                         "value" => $totalPriceFormatted,
-                        'currency_code' => strtoupper($shopProduct->currency_code),
+                        'currency_code' => $currencyCode,
                         'breakdown' => [
                             'item_total' => [
-                                'currency_code' => strtoupper($shopProduct->currency_code),
+                                'currency_code' => $currencyCode,
                                 'value' => $totalPriceFormatted,
                             ],
-
-                            /* Removed due to errors in the coupon discount calculation. Its not used in other paymentgateways aswell and basically nice to have but unnessecary
-
-                            'tax_total' => [
-                                'currency_code' => strtoupper($shopProduct->currency_code),
-                                'value' => round($shopProduct->getTaxValue(), 2),
-                            ]
-                            */
-                        ]
+                        ],
                     ]
                 ]
             ],
