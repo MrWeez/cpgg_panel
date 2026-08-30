@@ -46,19 +46,23 @@
                                                                 class="row checkout-gateways @if (!$loop->last) mb-2 @endif">
                                                                 <div class="col-12 d-flex justify-content-between">
                                                                     <label
-                                                                        class="form-check-label h5 checkout-gateway-label"
+                                                                        class="form-check-label h5 checkout-gateway-label @if (!$gateway->available) text-muted @endif"
                                                                         for="{{ $gateway->name }}">
                                                                         <span class="mr-3">{{ $gateway->name }}</span>
                                                                     </label>
-                                                                    <button class="rounded btn btn-primary" type="button"
-                                                                        id="{{ $gateway->name }}"
-                                                                        value="{{ $gateway->name }}"
-                                                                        :class="payment_method === '{{ $gateway->name }}' ?
-                                                                            'active' : ''"
-                                                                        :disabled="isFreeAfterCoupon"
-                                                                        @click="payment_method = '{{ $gateway->name }}'; submitted = true;"
-                                                                        x-text="payment_method == '{{ $gateway->name }}' ? 'Selected' : 'Select'">Select</button>
-
+                                                                    <span @if (!$gateway->available) data-toggle="popover"
+                                                                            data-trigger="hover"
+                                                                            data-placement="top"
+                                                                            data-content="{{ $gateway->unavailable_reason }}" @endif>
+                                                                        <button class="rounded btn btn-primary @if (!$gateway->available) disabled @endif" type="button"
+                                                                            id="{{ $gateway->name }}"
+                                                                            value="{{ $gateway->name }}"
+                                                                            :class="payment_method === '{{ $gateway->name }}' ?
+                                                                                'active' : ''"
+                                                                            :disabled="isFreeAfterCoupon || {{ $gateway->available ? 'false' : 'true' }}"
+                                                                            @click="payment_method = '{{ $gateway->name }}'; submitted = true;"
+                                                                            x-text="payment_method == '{{ $gateway->name }}' ? 'Selected' : 'Select'">Select</button>
+                                                                    </span>
                                                                 </div>
                                                             </div>
                                                         @endforeach
