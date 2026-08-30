@@ -28,6 +28,147 @@
                 @csrf
                 @method('post')
                 <div class="flex-wrap row d-flex justify-content-center">
+                    @if ($billingRequired)
+                        <div class="col-xl-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4 class="mb-0 text-center">
+                                        <i class="fas fa-address-card"></i>
+                                        {{ __('Billing Details') }}
+                                    </h4>
+                                </div>
+                                <div class="card-body" x-data="billingForm()">
+                                    <p class="text-muted">
+                                        {{ __('Please provide your billing details. They will be used on your invoice and can be changed later in your profile.') }}
+                                    </p>
+
+                                    <div class="mb-3 btn-group d-flex">
+                                        <button type="button"
+                                            class="btn btn-sm btn-primary"
+                                            :class="!isCompany ? 'active' : ''"
+                                            @click="isCompany = false">{{ __('Individual') }}</button>
+                                        <button type="button"
+                                            class="btn btn-sm btn-primary"
+                                            :class="isCompany ? 'active' : ''"
+                                            @click="isCompany = true">{{ __('Company') }}</button>
+                                    </div>
+                                    <input type="hidden" name="billing_is_company" :value="isCompany ? 1 : 0">
+
+                                    <template x-if="!isCompany">
+                                        <div>
+                                            <div class="form-group">
+                                                <label>{{ __('First Name') }}</label>
+                                                <input type="text" name="billing_first_name" x-model="billing_first_name"
+                                                    class="form-control @error('billing_first_name') is-invalid @enderror"
+                                                    placeholder="{{ __('First Name') }}">
+                                                @error('billing_first_name')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                            <div class="form-group">
+                                                <label>{{ __('Last Name') }}</label>
+                                                <input type="text" name="billing_last_name" x-model="billing_last_name"
+                                                    class="form-control @error('billing_last_name') is-invalid @enderror"
+                                                    placeholder="{{ __('Last Name') }}">
+                                                @error('billing_last_name')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                    <template x-if="isCompany">
+                                        <div>
+                                            <div class="form-group">
+                                                <label>{{ __('Company Name') }}</label>
+                                                <input type="text" name="billing_company_name" x-model="billing_company_name"
+                                                    class="form-control @error('billing_company_name') is-invalid @enderror"
+                                                    placeholder="{{ __('Company Name') }}">
+                                                @error('billing_company_name')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                            <div class="form-group">
+                                                <label>{{ __('VAT Number') }}</label>
+                                                <input type="text" name="billing_vat_number" x-model="billing_vat_number"
+                                                    class="form-control @error('billing_vat_number') is-invalid @enderror"
+                                                    placeholder="{{ __('VAT Number') }}">
+                                                @error('billing_vat_number')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                    <div class="form-group">
+                                        <label>{{ __('Phone') }}</label>
+                                        <input type="text" name="billing_phone" x-model="billing_phone"
+                                            class="form-control @error('billing_phone') is-invalid @enderror"
+                                            placeholder="{{ __('Phone') }}">
+                                        @error('billing_phone')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>{{ __('Address') }}</label>
+                                        <input type="text" name="billing_address" x-model="billing_address"
+                                            class="form-control @error('billing_address') is-invalid @enderror"
+                                            placeholder="{{ __('Street address') }}">
+                                        @error('billing_address')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-7 form-group">
+                                            <label>{{ __('City') }}</label>
+                                            <input type="text" name="billing_city" x-model="billing_city"
+                                                class="form-control @error('billing_city') is-invalid @enderror"
+                                                placeholder="{{ __('City') }}">
+                                            @error('billing_city')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                        <div class="col-5 form-group">
+                                            <label>{{ __('State / Province') }}</label>
+                                            <input type="text" name="billing_state" x-model="billing_state"
+                                                class="form-control @error('billing_state') is-invalid @enderror"
+                                                placeholder="{{ __('Optional') }}">
+                                            @error('billing_state')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-7 form-group">
+                                            <label>{{ __('ZIP / Postal Code') }}</label>
+                                            <input type="text" name="billing_postal_code" x-model="billing_postal_code"
+                                                class="form-control @error('billing_postal_code') is-invalid @enderror"
+                                                placeholder="{{ __('ZIP / Postal Code') }}">
+                                            @error('billing_postal_code')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                        <div class="col-5 form-group">
+                                            <label>{{ __('Country') }}</label>
+                                            <select name="billing_country" x-model="billing_country"
+                                                class="form-control @error('billing_country') is-invalid @enderror">
+                                                <option value="">{{ __('Select country...') }}</option>
+                                                @foreach ($countries as $code => $name)
+                                                    <option value="{{ $code }}">{{ $name }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('billing_country')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                     @if (!$productIsFree)
                         <div class="col-xl-4">
                             <div class="card">
@@ -258,6 +399,22 @@
     <!-- END CONTENT -->
 
     <script>
+        function billingForm() {
+            return {
+                isCompany: false,
+                billing_first_name: '',
+                billing_last_name: '',
+                billing_company_name: '',
+                billing_vat_number: '',
+                billing_phone: '',
+                billing_address: '',
+                billing_city: '',
+                billing_state: '',
+                billing_postal_code: '',
+                billing_country: '',
+            }
+        }
+
         function couponForm() {
             return {
                 // Get the product id from the url

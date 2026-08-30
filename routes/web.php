@@ -103,6 +103,7 @@ Route::middleware(['auth', 'checkSuspended', 'two_factor.required'])->group(func
     }
 
     Route::post('profile/selfdestruct', [ProfileController::class, 'selfDestroyUser'])->name('profile.selfDestroyUser');
+    Route::post('profile/billing', [ProfileController::class, 'updateBilling'])->name('profile.billing.update');
     Route::resource('profile', ProfileController::class);
     Route::resource('store', StoreController::class);
     Route::get('preferences', [PreferencesController::class, 'index'])->name('preferences.index');

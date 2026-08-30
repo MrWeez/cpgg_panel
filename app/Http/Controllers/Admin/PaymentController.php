@@ -26,8 +26,11 @@ use App\Helpers\ExtensionHelper;
 use App\Settings\CouponSettings;
 use App\Settings\GeneralSettings;
 use App\Settings\LocaleSettings;
+use App\Settings\UserSettings;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\Intl\Countries;
 
 class PaymentController extends Controller
 {
@@ -57,7 +60,7 @@ class PaymentController extends Controller
      * @param  ShopProduct  $shopProduct
      * @return Application|Factory|View
      */
-    public function checkOut(ShopProduct $shopProduct, GeneralSettings $general_settings, CouponSettings $coupon_settings, CurrencyHelper $currencyHelper)
+    public function checkOut(ShopProduct $shopProduct, GeneralSettings $general_settings, CouponSettings $coupon_settings, CurrencyHelper $currencyHelper, UserSettings $user_settings)
     {
         $this->checkPermission(self::BUY_PERMISSION);
 
@@ -103,6 +106,10 @@ class PaymentController extends Controller
             $gatewayFeeConfigs[$gateway->name] = $gateway->fee_config ?? [];
         }
 
+        /** @var User $user */
+        $user = Auth::user();
+        $billingRequired = $user_settings->require_billing_details_on_purchase && !$user->hasBillingDetails();
+
         return view('store.checkout')->with([
             'product' => $shopProduct,
             'discountpercent' => $discount,
@@ -116,6 +123,8 @@ class PaymentController extends Controller
             'productIsFree' => $price <= 0,
             'credits_display_name' => $general_settings->credits_display_name,
             'isCouponsEnabled' => $coupon_settings->enabled,
+            'billingRequired' => $billingRequired,
+            'countries' => Countries::getNames(app()->getLocale()),
         ]);
     }
 
@@ -159,7 +168,7 @@ class PaymentController extends Controller
         return redirect()->route('home')->with('success', __('Your :credits balance has been increased!', ['credits' => $general_settings->credits_display_name]));
     }
 
-    public function pay(Request $request, GeneralSettings $general_settings)
+    public function pay(Request $request, GeneralSettings $general_settings, UserSettings $user_settings)
     {
         $request->validate([
             'product_id' => ['required', 'exists:shop_products,id'],
@@ -190,6 +199,13 @@ class PaymentController extends Controller
 
             if ($discountedPrice <= 0) {
                 return $this->handleFreeProduct($shopProduct, $general_settings, $couponCode);
+            }
+
+            // Ask for billing details until the user has provided them. Free
+            // purchases are skipped above because they do not generate invoices.
+            if ($user_settings->require_billing_details_on_purchase && !$user->hasBillingDetails()) {
+                $this->validateBillingDetails($request);
+                $this->saveBillingDetails($request, $user);
             }
 
             $taxValue = $discountedPrice * $shopProduct->getTaxPercent() / 100;
@@ -248,6 +264,8 @@ class PaymentController extends Controller
 
             $redirectUrl = $paymentGatewayExtension::getRedirectUrl($payment, $shopProduct, $totalPrice);
 
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (Exception $e) {
             Log::error('Payment checkout failed', [
                 'user_id' => Auth::id(),
@@ -391,5 +409,62 @@ class PaymentController extends Controller
         }
 
         return redirect()->route('admin.payments.index')->with('info', __('Payment status rechecked, but it is still: ') . $payment->status->value);
+    }
+
+    /**
+     * Validate the billing details submitted at checkout.
+     *
+     * @param  Request  $request
+     * @return void
+     */
+    private function validateBillingDetails(Request $request): void
+    {
+        $isCompany = (bool) $request->input('billing_is_company');
+
+        $rules = [
+            'billing_is_company' => ['sometimes', 'boolean'],
+            'billing_phone' => ['nullable', 'string', 'max:40'],
+            'billing_address' => ['required', 'string', 'max:191'],
+            'billing_city' => ['required', 'string', 'max:191'],
+            'billing_state' => ['nullable', 'string', 'max:191'],
+            'billing_postal_code' => ['required', 'string', 'max:40'],
+            'billing_country' => ['required', 'string', 'size:2'],
+        ];
+
+        if ($isCompany) {
+            $rules['billing_company_name'] = ['required', 'string', 'max:191'];
+            $rules['billing_vat_number'] = ['nullable', 'string', 'max:64'];
+        } else {
+            $rules['billing_first_name'] = ['required', 'string', 'max:191'];
+            $rules['billing_last_name'] = ['required', 'string', 'max:191'];
+        }
+
+        $request->validate($rules);
+    }
+
+    /**
+     * Persist the billing details on the user.
+     *
+     * @param  Request  $request
+     * @param  User  $user
+     * @return void
+     */
+    private function saveBillingDetails(Request $request, User $user): void
+    {
+        $isCompany = (bool) $request->input('billing_is_company');
+
+        $user->update([
+            'first_name' => $isCompany ? null : $request->input('billing_first_name'),
+            'last_name' => $isCompany ? null : $request->input('billing_last_name'),
+            'phone' => $request->input('billing_phone'),
+            'address' => $request->input('billing_address'),
+            'city' => $request->input('billing_city'),
+            'state' => $request->input('billing_state'),
+            'postal_code' => $request->input('billing_postal_code'),
+            'country' => strtoupper($request->input('billing_country')),
+            'is_company' => $isCompany,
+            'company_name' => $isCompany ? $request->input('billing_company_name') : null,
+            'vat_number' => $isCompany ? $request->input('billing_vat_number') : null,
+        ]);
     }
 }

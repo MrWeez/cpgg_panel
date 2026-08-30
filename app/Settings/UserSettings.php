@@ -17,6 +17,7 @@ class UserSettings extends Settings
     public int $server_limit_increment_after_verify_email = 0;
     public int $server_limit_increment_after_verify_discord = 0;
     public int $server_limit_increment_after_irl_purchase = 0;
+    public bool $require_billing_details_on_purchase = false;
 
     public static function group(): string
     {
@@ -41,6 +42,7 @@ class UserSettings extends Settings
             'server_limit_increment_after_verify_email' => 'required|numeric',
             'server_limit_increment_after_verify_discord' => 'required|numeric',
             'server_limit_increment_after_irl_purchase' => 'required|numeric',
+            'require_billing_details_on_purchase' => 'nullable|string',
         ];
     }
 
@@ -75,6 +77,10 @@ class UserSettings extends Settings
                 'limits' => [
                     'label' => 'Server Limit Increases',
                     'description' => 'How the server limit grows with a user\'s account',
+                ],
+                'billing' => [
+                    'label' => 'Billing Details',
+                    'description' => 'Require billing details from users when they make their first purchase',
                 ],
             ],
             'creation_enabled' => [
@@ -145,6 +151,12 @@ class UserSettings extends Settings
                 'type' => 'number',
                 'description' => 'Specifies how many additional servers a user can create after making their first purchase',
                 'section' => 'limits',
+            ],
+            'require_billing_details_on_purchase' => [
+                'label' => 'Require Billing Details on First Purchase',
+                'type' => 'boolean',
+                'description' => 'Ask users for their name and address at checkout until they have provided billing details',
+                'section' => 'billing',
             ],
         ];
     }

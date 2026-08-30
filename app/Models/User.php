@@ -72,6 +72,17 @@ class User extends Authenticatable implements MustVerifyEmail
         'suspended',
         'referral_code',
         'email_verified_reward',
+        'first_name',
+        'last_name',
+        'phone',
+        'address',
+        'city',
+        'state',
+        'postal_code',
+        'country',
+        'is_company',
+        'company_name',
+        'vat_number',
     ];
 
     /**
@@ -93,7 +104,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_verified_at' => 'datetime',
         'last_seen' => 'datetime',
         'server_limit' => 'integer',
-        'email_verified_reward' => 'boolean'
+        'email_verified_reward' => 'boolean',
+        'is_company' => 'boolean'
     ];
 
     public function __construct()
@@ -392,5 +404,58 @@ class User extends Authenticatable implements MustVerifyEmail
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->dontLogIfAttributesChangedOnly(['credits', 'server_limit', 'updated_at']);
+    }
+
+    /**
+     * The address fields that are required for billing details to be complete.
+     *
+     * @return array
+     */
+    public function requiredBillingFields(): array
+    {
+        $fields = ['address', 'city', 'postal_code', 'country'];
+
+        if ($this->is_company) {
+            $fields[] = 'company_name';
+        } else {
+            $fields[] = 'first_name';
+            $fields[] = 'last_name';
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Whether the user has provided complete billing details.
+     *
+     * @return bool
+     */
+    public function hasBillingDetails(): bool
+    {
+        foreach ($this->requiredBillingFields() as $field) {
+            if (blank($this->{$field})) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * The name shown as the buyer on invoices and billing documents.
+     *
+     * @return string
+     */
+    public function getBillingName(): string
+    {
+        if ($this->is_company && !blank($this->company_name)) {
+            return $this->company_name;
+        }
+
+        if (!blank($this->first_name) || !blank($this->last_name)) {
+            return trim($this->first_name . ' ' . $this->last_name);
+        }
+
+        return $this->name;
     }
 }

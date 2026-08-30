@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\Intl\Countries;
 
 class ProfileController extends Controller
 {
@@ -38,6 +39,7 @@ class ProfileController extends Controller
         return view('profile.index')->with([
             'user' => $user,
             'availableMethods' => $availableMethods,
+            'countries' => Countries::getNames(app()->getLocale()),
             // raw numeric value for logical checks; formatting occurs in blades when needed
             'credits_reward_after_verify_discord' => $user_settings->credits_reward_after_verify_discord,
             'force_email_verification' => $user_settings->force_email_verification,
@@ -160,5 +162,54 @@ class ProfileController extends Controller
         }
 
         return redirect()->route('profile.index')->with('success', __('Profile updated'));
+    }
+
+    /**
+     * Update the billing details of the authenticated user.
+     *
+     * @param  Request  $request
+     * @return RedirectResponse
+     */
+    public function updateBilling(Request $request)
+    {
+        $user = Auth::user();
+
+        $isCompany = (bool) $request->input('billing_is_company');
+
+        $rules = [
+            'billing_is_company' => ['sometimes', 'boolean'],
+            'billing_phone' => ['nullable', 'string', 'max:40'],
+            'billing_address' => ['required', 'string', 'max:191'],
+            'billing_city' => ['required', 'string', 'max:191'],
+            'billing_state' => ['nullable', 'string', 'max:191'],
+            'billing_postal_code' => ['required', 'string', 'max:40'],
+            'billing_country' => ['required', 'string', 'size:2'],
+        ];
+
+        if ($isCompany) {
+            $rules['billing_company_name'] = ['required', 'string', 'max:191'];
+            $rules['billing_vat_number'] = ['nullable', 'string', 'max:64'];
+        } else {
+            $rules['billing_first_name'] = ['required', 'string', 'max:191'];
+            $rules['billing_last_name'] = ['required', 'string', 'max:191'];
+        }
+
+        $request->validate($rules);
+
+        $user->update([
+            'first_name' => $isCompany ? null : $request->input('billing_first_name'),
+            'last_name' => $isCompany ? null : $request->input('billing_last_name'),
+            'phone' => $request->input('billing_phone'),
+            'address' => $request->input('billing_address'),
+            'city' => $request->input('billing_city'),
+            'state' => $request->input('billing_state'),
+            'postal_code' => $request->input('billing_postal_code'),
+            'country' => strtoupper($request->input('billing_country')),
+            'is_company' => $isCompany,
+            'company_name' => $isCompany ? $request->input('billing_company_name') : null,
+            'vat_number' => $isCompany ? $request->input('billing_vat_number') : null,
+        ]);
+
+        return redirect()->route('profile.index')->with('success', __('Billing details updated'));
     }
 }
