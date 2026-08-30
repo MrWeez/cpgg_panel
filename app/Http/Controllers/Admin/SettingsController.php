@@ -98,6 +98,7 @@ class SettingsController extends Controller
                     'identifier' => $optionInputData[$key]['identifier'] ?? 'option',
                     'section' => $optionInputData[$key]['section'] ?? null,
                     'visible_when' => $optionInputData[$key]['visible_when'] ?? null,
+                    'suffix' => $optionInputData[$key]['suffix'] ?? null,
                 ];
 
                 if($optionInputData[$key]['type'] === 'number') {

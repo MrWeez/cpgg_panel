@@ -246,9 +246,22 @@
                                                                         @break
 
                                                                         @case($value['type'] == 'number')
-                                                                            <input type="number" step="{{ $value['step'] ?? '1' }}" class="form-control"
-                                                                                name="{{ $key }}"
-                                                                                value="{{ isset($value['converted_value']) ? $value['converted_value'] : $value['value'] }}">
+                                                                            @if (isset($value['suffix']))
+                                                                                <div class="input-group">
+                                                                                    <input type="number" step="{{ $value['step'] ?? '1' }}" class="form-control"
+                                                                                        name="{{ $key }}"
+                                                                                        value="{{ isset($value['converted_value']) ? $value['converted_value'] : $value['value'] }}">
+                                                                                    <div class="input-group-append">
+                                                                                        <span class="input-group-text"
+                                                                                            data-suffix-for="{{ $key }}"
+                                                                                            data-suffix-mapping='{{ json_encode($value['suffix']) }}'>&nbsp;</span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            @else
+                                                                                <input type="number" step="{{ $value['step'] ?? '1' }}" class="form-control"
+                                                                                    name="{{ $key }}"
+                                                                                    value="{{ isset($value['converted_value']) ? $value['converted_value'] : $value['value'] }}">
+                                                                            @endif
                                                                         @break
 
                                                                         @case($value['type'] == 'select')
@@ -463,6 +476,17 @@
                 }
 
                 $row.toggle(visible);
+            });
+
+            // Update the suffix of an input based on the value of another option.
+            $('[data-suffix-mapping]').each(function () {
+                const $suffix = $(this);
+                const $form = $suffix.closest('form');
+                const mapping = $suffix.data('suffix-mapping') || {};
+                const $dep = $form.find('#' + (mapping.depends_on || ''));
+                const value = $dep.length ? $dep.val() : null;
+                const text = (mapping.map && mapping.map[value]) || '';
+                $suffix.text(text || '\u00A0');
             });
         }
 
