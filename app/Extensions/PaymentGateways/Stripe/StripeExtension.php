@@ -455,14 +455,30 @@ class StripeExtension extends PaymentExtension
     }
 
     /**
-     * Stripe supports every currency that is available in the system.
-     * The global currency_codes config is derived from Stripe's supported presentment currencies.
+     * Stripe presentment currencies as documented at https://docs.stripe.com/currencies.
+     * Kept static so the supported list stays aligned with Stripe's actual coverage,
+     * independent of the global currency_codes config.
      *
-     * @return array<int, string>|null
+     * @return array<int, string>
      */
-    public static function getSupportedCurrencies(): ?array
+    public static function getSupportedCurrencies(): array
     {
-        return config('currency_codes');
+        return [
+            'AED', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD', 'AWG', 'AZN',
+            'BAM', 'BBD', 'BDT', 'BIF', 'BMD', 'BND', 'BOB', 'BRL', 'BSD', 'BWP',
+            'BYN', 'BZD', 'CAD', 'CDF', 'CHF', 'CLP', 'CNY', 'COP', 'CRC', 'CVE',
+            'CZK', 'DJF', 'DKK', 'DOP', 'DZD', 'EGP', 'ETB', 'EUR', 'FJD', 'FKP',
+            'GBP', 'GEL', 'GIP', 'GMD', 'GNF', 'GTQ', 'GYD', 'HKD', 'HNL', 'HTG',
+            'HUF', 'IDR', 'ILS', 'INR', 'ISK', 'JMD', 'JPY', 'KES', 'KGS', 'KHR',
+            'KMF', 'KRW', 'KYD', 'KZT', 'LAK', 'LBP', 'LKR', 'LRD', 'LSL', 'MAD',
+            'MDL', 'MGA', 'MKD', 'MMK', 'MNT', 'MOP', 'MUR', 'MVR', 'MWK', 'MXN',
+            'MYR', 'MZN', 'NAD', 'NGN', 'NIO', 'NOK', 'NPR', 'NZD', 'PAB', 'PEN',
+            'PGK', 'PHP', 'PKR', 'PLN', 'PYG', 'QAR', 'RON', 'RSD', 'RUB', 'RWF',
+            'SAR', 'SBD', 'SCR', 'SEK', 'SGD', 'SHP', 'SLE', 'SOS', 'SRD', 'STD',
+            'SZL', 'THB', 'TJS', 'TOP', 'TRY', 'TTD', 'TWD', 'TZS', 'UAH', 'UGX',
+            'USD', 'UYU', 'UZS', 'VND', 'VUV', 'WST', 'XAF', 'XCD', 'XCG', 'XOF',
+            'XPF', 'YER', 'ZAR', 'ZMW',
+        ];
     }
 
     /**
