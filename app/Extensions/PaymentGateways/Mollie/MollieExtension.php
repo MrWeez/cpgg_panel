@@ -34,6 +34,19 @@ class MollieExtension extends PaymentExtension
             'Manage Mollie Settings' => 'settings.mollie.write',
         ];
     }
+    /**
+     * Currencies Mollie accepts for card payments, PayPal and other payment methods.
+     *
+     * @return array<int, string>
+     */
+    public static function getSupportedCurrencies(): array
+    {
+        return [
+            'AED', 'AUD', 'BRL', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD',
+            'HUF', 'ILS', 'ISK', 'JPY', 'MXN', 'MYR', 'NOK', 'NZD', 'PHP', 'PLN',
+            'RON', 'RUB', 'SEK', 'SGD', 'THB', 'TWD', 'USD', 'ZAR',
+        ];
+    }
 
     public static function getRedirectUrl(Payment $payment, ShopProduct $shopProduct, int $totalPrice): string
     {

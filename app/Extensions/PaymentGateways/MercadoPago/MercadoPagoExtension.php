@@ -38,6 +38,17 @@ class MercadoPagoExtension extends PaymentExtension
             'Manage Mercado Pago Settings' => 'settings.mercadopago.write',
         ];
     }
+    /**
+     * Currencies supported by Mercado Pago, matching the countries it operates in.
+     *
+     * @return array<int, string>
+     */
+    public static function getSupportedCurrencies(): array
+    {
+        return [
+            'ARS', 'BRL', 'CLP', 'COP', 'MXN', 'PEN', 'UYU',
+        ];
+    }
 
     public static function getRedirectUrl(Payment $payment, ShopProduct $shopProduct, int $totalPrice): string
     {
