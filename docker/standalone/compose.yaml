@@ -1,62 +1,60 @@
 services:
-  ctrlpanel_standalone:
+  ctrlpanel:
     image: ghcr.io/ctrlpanel-gg/panel:latest
-    container_name: ctrlpanel_standalone
     restart: unless-stopped
     depends_on:
-      - redis
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
-      - "80:80"
-      - "443:443"
+      - "9010:80"
+    environment:
+      DB_HOST: mariadb
+      DB_DATABASE: "${CTRLPANEL_DB_DATABASE}"
+      DB_USERNAME: "${CTRLPANEL_DB_USER}"
+      DB_PASSWORD: "${CTRLPANEL_DB_PASSWORD}"
+      REDIS_HOST: redis
+      TRUSTED_PROXIES: "${CTRLPANEL_TRUSTED_PROXIES}"
     volumes:
-      - './logs:/var/www/html/storage/logs:w'
-      - './env_file:/var/www/html/.env'
-      - './website_files:/var/www/html:rw' # optionally remove this bind mount, it's not needed unless you want access to all project files, to modify the project with addons/plugins.
-      - './nginx_config:/etc/nginx/conf.d/:rw' # optionally remove this bind mount, it's not needed unless you want to modify the project with addons/plugins. (dangerous to edit)
+      - './panel.env:/var/www/html/.env'
+      - './storage:/var/www/html/storage'
+      # - './panel:/var/www/html:rw' # full project access for addons/plugins
+      # - './nginx:/etc/nginx/conf.d/:rw' # custom nginx, dangerous to edit
     networks:
       - ctrlpanel
 
-  mysql:
-    image: mysql
-    container_name: ctrlpanel_mysql
+  mariadb:
+    image: mariadb:11.8
     restart: unless-stopped
-    tty: true
-    ports:
-      - "3306:3306"
     environment:
-      MYSQL_DATABASE: ctrlpanel
-      MYSQL_USER: ctrlpaneluser
-      MYSQL_PASSWORD: root # change it
-      MYSQL_ROOT_PASSWORD: root # change it
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
     volumes:
-      - "./mysql:/var/lib/mysql:delegated"
+      - 'mariadb-data:/var/lib/mysql'
     networks:
       - ctrlpanel
-
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: ctrlpanel_phpmyadmin
-    restart: unless-stopped
-    depends_on:
-      - mysql
-    ports:
-      - '8080:80'
-    environment:
-      - PMA_HOST=ctrlpanel_mysql
-      - PMA_USER=root # change it
-      - PMA_PASSWORD=root # change it
-      - PMA_ARBITRARY=1
-    networks:
-      - ctrlpanel
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
-    image: redis
-    container_name: ctrlpanel_redis
+    image: redis:8-alpine
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     networks:
       - ctrlpanel
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
   ctrlpanel:
+
+volumes:
+  mariadb-data:

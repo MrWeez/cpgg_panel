@@ -1,0 +1,17 @@
+# Never bake local secrets, deps, or runtime state into the image.
+.env
+vendor
+node_modules
+.git
+
+# Runtime dirs, provided by binds/volumes or recreated at boot.
+storage/logs/*
+bootstrap/cache/*
+public/storage
+
+# Standalone deploy state next to compose.yaml (absent in repo, present on hosts).
+docker/standalone/panel.env
+docker/standalone/env_file
+docker/standalone/storage
+docker/standalone/mysql
+docker/standalone/panel

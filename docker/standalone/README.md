@@ -7,21 +7,27 @@ If you're using a different operating system, you can follow the official Docker
 
 Once you have Docker installed, you can run CtrlPanel standalone Docker by executing the following command:
 
-Running as commandline command:
+Running as commandline command needs external MariaDB + Redis, compose below is recommended:
 
 ```bash
-docker run -p 80:80 -p 443:443 -v /path/to/website_files:/var/www/html ghcr.io/ctrlpanel-gg/panel:latest
+docker run -p 9010:80 ghcr.io/ctrlpanel-gg/panel:latest
 ```
+
+Plain HTTP only, TLS terminates at your reverse proxy / tunnel. Image defaults (`DB_HOST=mariadb`, `REDIS_HOST=redis`) already work with compose, no vars required.
 
 This command will run the latest CtrlPanel Docker image from GitHub Container Registry and run it.
 
 Recommended way via Docker Compose:
 
-1. Copy and configure your docker compose file to your needs `curl -L -o compose.yaml https://raw.githubusercontent.com/Ctrlpanel-gg/panel/blob/main/docker/standalone/compose.yaml`.
-2. Create the env file in the same directory as the compose file `touch env_file`.
-3. When installing you need to update the `env_file` file. Change this variable to: `REDIS_HOST=redis`, to use the Redis server which comes with the docker compose installation.
+1. Copy compose file and docker env template:
+```bash
+curl -L -o compose.yaml https://raw.githubusercontent.com/Ctrlpanel-gg/panel/main/docker/standalone/compose.yaml
+curl -L -o .env https://raw.githubusercontent.com/Ctrlpanel-gg/panel/main/docker/standalone/.env.example
+```
+Edit `.env` (`MYSQL_*` for db, `CTRLPANEL_DB_*` mapped from them by default, panel `.env` inside container is written by installer).
+2. Create the panel env file `touch panel.env`. Persistent by default: `panel.env` (installer settings), `./storage` (logs, uploads, cache), `mariadb-data` volume (database). DB host `mariadb` and Redis host `redis` are hardcoded from compose network, prefilled in installer with live credentials. Host port is `9010:80` in compose, edit it there directly. Optional full-code / nginx mounts are commented in compose.
 
-The control panel will be available at http://localhost/install and will be a completely fresh installation.
+The control panel will be available at http://localhost:9010/installer and will be a completely fresh installation.
 
 Note that while the container contains the full CtrlPanel installation, you will still need to perform the basic setup. You can find instructions for this [here](https://ctrlpanel.gg/docs/Installation/getting-started#basic-setup).
 

@@ -28,16 +28,28 @@ RUN pecl install redis \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# Docker defaults so compose works with zero vars set.
+# Installer-typed credentials live in .env file, these only fix service hostnames.
+ENV DB_HOST=mariadb \
+    DB_PORT=3306 \
+    REDIS_HOST=redis \
+    REDIS_PORT=6379 \
+    TRUSTED_PROXIES="*"
+
 # Create directory for application
-RUN mkdir -p /var/default /var/www/html
+RUN mkdir -p /var/www/html
 
 # Create user and group for Laravel
 RUN groupadd -g 1000 laravel \
     && useradd -u 1000 -g laravel -ms /bin/bash laravel \
-    && chown -R laravel:laravel /var/default /var/www/html
+    && chown -R laravel:laravel /var/www/html
 
-# Copy application files
-COPY --chown=laravel:laravel . /var/default
+# Copy application files, baked directly, no lazy copy at boot
+COPY --chown=laravel:laravel . /var/www/html
+
+# Pristine copy, only used to seed an empty ./panel bind mount (see startup.sh).
+# Regular boot serves /var/www/html straight from the image.
+COPY --chown=laravel:laravel . /var/panel-seed
 
 # Copy PHP-FPM configuration
 COPY --chown=laravel:laravel ./docker/standalone/php/www.conf /usr/local/etc/php-fpm.d/
@@ -47,8 +59,10 @@ COPY --chown=laravel:laravel ./docker/standalone/nginx/nginx.conf /etc/nginx/ngi
 # Create directory for Nginx logs
 RUN mkdir -p /var/log/nginx && chown -R laravel:laravel /var/log/nginx
 
-# Expose ports
-EXPOSE 80 443
+# Expose plain HTTP only, TLS terminates at reverse proxy / tunnel
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -f http://localhost/up || curl -f http://localhost/ || exit 1
 
 # Copy startup script
 COPY --chown=laravel:laravel ./docker/standalone/scripts/startup.sh /usr/local/bin/startup-script.sh
@@ -58,7 +72,7 @@ RUN chmod +x /usr/local/bin/startup-script.sh
 # Set the working directory
 WORKDIR /var/www/html
 
+RUN chown -R laravel:laravel /var/www/html
+
 # Start the startup script
 CMD ["/usr/local/bin/startup-script.sh"]
-
-RUN chown -R laravel:laravel /var/www/html
