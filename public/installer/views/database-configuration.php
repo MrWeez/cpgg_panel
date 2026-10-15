@@ -24,7 +24,8 @@
                 <div class="flex flex-col mb-3">
                     <label for="databasehost">Database Host</label>
                     <input x-model="databasehost" id="databasehost" name="databasehost" type="text" required
-                        placeholder="e.g. localhost, 10.x.x.x, mysql, 192.168.x.x"
+                        value="<?= htmlspecialchars(getenv('DB_HOST') ?: '127.0.0.1') ?>"
+                        placeholder="e.g. localhost, 10.x.x.x, mariadb, 192.168.x.x"
                         class="px-2 py-1 bg-[#1D2125] border-2 focus:border-sky-500 box-border rounded-md border-transparent outline-none">
                 </div>
             </div>
@@ -32,7 +33,7 @@
                 <div class="flex flex-col mb-3">
                     <label for="databaseport">Database Port</label>
                     <input x-model="databaseport" id="databaseport" name="databaseport" type="number" required
-                        value="3306"
+                        value="<?= htmlspecialchars(getenv('DB_PORT') ?: '3306') ?>"
                         class="px-2 py-1 bg-[#1D2125] border-2 focus:border-sky-500 box-border rounded-md border-transparent outline-none">
                 </div>
             </div>
@@ -40,7 +41,7 @@
                 <div class="flex flex-col mb-3">
                     <label for="databaseuser">Database User</label>
                     <input x-model="databaseuser" id="databaseuser" name="databaseuser" type="text" required
-                        value="ctrlpaneluser"
+                        value="<?= htmlspecialchars(getenv('DB_USERNAME') ?: 'ctrlpaneluser') ?>"
                         class="px-2 py-1 bg-[#1D2125] border-2 focus:border-sky-500 box-border rounded-md border-transparent outline-none">
                 </div>
             </div>
@@ -49,6 +50,7 @@
                     <label for="databaseuserpass">Database User Password</label>
                     <input x-model="databaseuserpass" id="databaseuserpass" name="databaseuserpass" type="text"
                         required
+                        value="<?= htmlspecialchars(getenv('DB_PASSWORD') ?: '') ?>"
                         class="px-2 py-1 bg-[#1D2125] border-2 focus:border-sky-500 box-border rounded-md border-transparent outline-none">
                 </div>
             </div>
@@ -56,7 +58,7 @@
             <div class="form-group">
                 <div class="flex flex-col">
                     <label for="database">Database</label>
-                    <input x-model="database" id="database" name="database" type="text" required value="ctrlpanel"
+                    <input x-model="database" id="database" name="database" type="text" required value="<?= htmlspecialchars(getenv('DB_DATABASE') ?: 'ctrlpanel') ?>"
                         class="px-2 py-1 bg-[#1D2125] border-2 focus:border-sky-500 box-border rounded-md border-transparent outline-none">
                 </div>
             </div>

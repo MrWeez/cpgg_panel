@@ -17,6 +17,7 @@
                 <div class="flex flex-col mb-3">
                     <label for="redishost">Redis Host</label>
                     <input x-model="redishost" id="redishost" name="redishost" type="text" required
+                        value="<?= htmlspecialchars(getenv('REDIS_HOST') ?: '127.0.0.1') ?>"
                         placeholder="e.g. localhost, 127.0.0.1, 10.x.x.x, redis, 192.168.x.x"
                         class="px-2 py-1 bg-[#1D2125] border-2 focus:border-sky-500 box-border rounded-md border-transparent outline-none">
                 </div>
@@ -25,7 +26,7 @@
                 <div class="flex flex-col mb-3">
                     <label for="redisport">Redis Port</label>
                     <input x-model="redisport" id="redisport" name="redisport" type="number" required
-                        value="6379"
+                        value="<?= htmlspecialchars(getenv('REDIS_PORT') ?: '6379') ?>"
                         class="px-2 py-1 bg-[#1D2125] border-2 focus:border-sky-500 box-border rounded-md border-transparent outline-none">
                 </div>
             </div>
@@ -33,6 +34,7 @@
                 <div class="flex flex-col mb-3">
                     <label for="redispassword">Redis Password (optionally, only if configured)</label>
                     <input x-model="redispassword" id="redispassword" name="redispassword" type="text"
+                        value="<?= htmlspecialchars(($pw = getenv('REDIS_PASSWORD')) && $pw !== 'null' ? $pw : '') ?>"
                         placeholder="usually can be left blank"
                         class="px-2 py-1 bg-[#1D2125] border-2 focus:border-sky-500 box-border rounded-md border-transparent outline-none">
                 </div>
