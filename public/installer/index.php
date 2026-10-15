@@ -10,7 +10,7 @@ if (file_exists('../../install.lock')) {
     exit("The installation has been completed already. Please delete the File 'install.lock' to re-run");
 }
 
-if (!file_exists('../../.env')) {
+if (!file_exists('../../.env') || filesize('../../.env') === 0) {
     echo shell_exec('cp ../../.env.example ../../.env');
 }
 
