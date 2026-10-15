@@ -1,5 +1,16 @@
 <?php
 
+// Scribe is require-dev. On --no-dev installs (prod, docker) its classes
+// are missing and referencing them fatals every artisan boot, including
+// composer post-autoload-dump. Bail with a stub when absent.
+if (!enum_exists('Knuckles\Scribe\Config\AuthIn')) {
+    return [
+        'title' => 'CtrlPanel.gg API Documentation',
+        'description' => '',
+        'intro_text' => '',
+    ];
+}
+
 use Knuckles\Scribe\Config\AuthIn;
 use Knuckles\Scribe\Config\Defaults;
 use Knuckles\Scribe\Extracting\Strategies;
