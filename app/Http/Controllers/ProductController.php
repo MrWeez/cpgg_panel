@@ -125,6 +125,8 @@ class ProductController extends Controller
     }
 
     /**
+     * List products for location.
+     *
      * @param  Int $location
      * @param  Egg  $egg
      * @return Collection|JsonResponse
@@ -152,7 +154,6 @@ class ProductController extends Controller
             }])
             ->get();
 
-        // Check if the product fits in at least one node
         foreach ($products as $product) {
             $product->doesNotFit = true;
 
@@ -162,7 +163,6 @@ class ProductController extends Controller
                 $availableMemory = ($pteroNode['memory'] * ($pteroNode['memory_overallocate'] + 100) / 100) - $pteroNode['allocated_resources']['memory'];
                 $availableDisk = ($pteroNode['disk'] * ($pteroNode['disk_overallocate'] + 100) / 100) - $pteroNode['allocated_resources']['disk'];
 
-                // If the product fits in this node, mark it as fitting and break out of the loop
                 if ($product->memory <= $availableMemory && $product->disk <= $availableDisk) {
                     $product->doesNotFit = false;
                     break;

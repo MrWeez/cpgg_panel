@@ -10,9 +10,7 @@ use DOMXPath;
  * Sanitizes untrusted HTML that is later rendered unescaped ({!! !!}).
  *
  * Content is restricted to a configurable allow-list of tags and attributes.
- * Everything else (scripts, event handlers, iframes, object/embed, style
- * injection, unsafe URL schemes) is stripped, and unbalanced markup is
- * repaired into a valid document fragment.
+ * Everything else is stripped, unbalanced markup is repaired.
  *
  * Note: This thing was vibecoded. Why? I (MrWeez) don't want to introduce
  * a new Composer dependency. We already had problems with captcha dependencies

@@ -123,7 +123,6 @@ class NotifyServerSuspension extends Command
             /** @var Product $product */
             $product = $server->product;
 
-            // Check if this server would be suspended due to insufficient credits
             if ($remainingCredits < $product->price && $product->price !== 0) {
                 $atRiskEntries->push($entry);
                 $atRiskServerIds[] = $server->id;

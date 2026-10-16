@@ -652,20 +652,17 @@ class ServerController extends Controller
         $nodeId = $serverInfo['relationships']['node']['attributes']['id'];
         $node = Node::findOrFail($nodeId);
 
-        // Check node resources
         $requireMemory = $newProduct->memory - $oldProduct->memory;
         $requireDisk = $newProduct->disk - $oldProduct->disk;
         if (!$this->pterodactyl->checkNodeResources($node, $requireMemory, $requireDisk)) {
             return false;
         }
 
-        // Check if user has enough credits after refund
         $refundAmount = $this->calculateRefund($server, $oldProduct);
         if ($user->credits < ($newProduct->price - $refundAmount)) {
             return false;
         }
 
-        // Check server limit for the new product
         if ($oldProduct->id !== $newProduct->id && $this->productLimitReached($user, $newProduct)) {
             return false;
         }
@@ -690,12 +687,10 @@ class ServerController extends Controller
             ->get();
 
         $availableNodes = $nodes->reject(function ($node) use ($product) {
-            // Check if node has enough memory and disk resources
             if (!$this->pterodactyl->checkNodeResources($node, $product->memory, $product->disk)) {
                 return true;
             }
 
-            // Check if node has reached its per-node allocation limit.
             if ($this->pterodactyl->nodeHasReachedAllocationLimit($node)) {
                 return true;
             }
@@ -709,9 +704,11 @@ class ServerController extends Controller
     }
 
     /**
-     * Find a node in the given location for the product that has required resources
-     * and also a free allocation on Pterodactyl. Returns ['node' => Node, 'allocation_id' => int]
-     * or null when none available.
+     * Find node with resources and free allocation.
+     *
+     * @param string $locationId
+     * @param Product $product
+     * @return array|null
      */
     private function findAvailableNodeWithAllocation(string $locationId, Product $product): ?array
     {
@@ -724,7 +721,6 @@ class ServerController extends Controller
                 return true;
             }
 
-            // Check if node has reached its per-node allocation limit.
             return $this->pterodactyl->nodeHasReachedAllocationLimit($node);
         });
 

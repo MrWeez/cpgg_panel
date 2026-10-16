@@ -47,7 +47,7 @@ class ServerController extends Controller
     }
 
     /**
-     * Display a listing of the resource.
+     * List servers.
      *
      * @return Application|Factory|View|Response
      */
@@ -61,7 +61,7 @@ class ServerController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Show edit form.
      *
      * @param  Server  $server
      * @return View
@@ -74,7 +74,6 @@ class ServerController extends Controller
             self::CHANGE_IDENTIFIER_PERMISSION,
         ]);
 
-        // get all users from the database
         $users = User::all();
 
         return view('admin.servers.edit')->with([
@@ -84,7 +83,7 @@ class ServerController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update server.
      *
      * @param  Request  $request
      * @param  Server  $server
@@ -104,27 +103,22 @@ class ServerController extends Controller
 
 
         if ($request->get('user_id') != $server->user_id && $this->can(self::CHANGEOWNER_PERMISSION)) {
-            // find the user
             $user = User::findOrFail($request->get('user_id'));
 
-            // try to update the owner on pterodactyl
             try {
                 $response = $this->pterodactyl->updateServerOwner($server, $user->pterodactyl_id);
                 if ($response->getStatusCode() != 200) {
                     return redirect()->back()->with('error', 'Failed to update server owner on pterodactyl');
                 }
 
-                // Attempt to remove/add roles respectively
                 try {
                     if($discord_settings->role_for_active_clients) {
-                        // remove the role from the old owner
                         $oldOwner = User::findOrFail($server->user_id);
                         $discordUser = $oldOwner->discordUser;
                         if ($discordUser && $oldOwner->servers->count() <= 1) {
                             $discordUser->addOrRemoveRole('remove', $discord_settings->role_id_for_active_clients);
                         }
 
-                        // add the role to the new owner
                         $discordUser = $user->discordUser;
                         if ($discordUser && $user->servers->count() >= 1) {
                             $discordUser->addOrRemoveRole('add', $discord_settings->role_id_for_active_clients);
@@ -134,7 +128,6 @@ class ServerController extends Controller
                     log::debug('Failed to update discord roles' . $e->getMessage());
                 }
 
-                // update the owner on the database
                 $server->user_id = $user->id;
 
             } catch (Exception $e) {
@@ -142,7 +135,6 @@ class ServerController extends Controller
             }
         }
 
-        // update the identifier
         if ($this->can(self::CHANGE_IDENTIFIER_PERMISSION)) {
 
             $server->identifier = $request->get('identifier');
@@ -153,7 +145,7 @@ class ServerController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete server.
      *
      * @param  Server  $server
      * @return RedirectResponse|Response
@@ -162,7 +154,6 @@ class ServerController extends Controller
     {
         $this->checkPermission(self::DELETE_PERMISSION);
         try {
-            // Remove role from discord
             try {
                 if($discord_settings->role_for_active_clients) {
                     $user = User::findOrFail($server->user_id);
@@ -175,7 +166,6 @@ class ServerController extends Controller
                 log::debug('Failed to update discord roles' . $e->getMessage());
             }
 
-            // Attempt to remove the server from pterodactyl
             $server->delete();
 
             return redirect()->route('admin.servers.index')->with('success', __('Server removed'));
@@ -204,6 +194,8 @@ class ServerController extends Controller
     }
 
     /**
+     * Toggle suspension.
+     *
      * @param Server $server
      * @return RedirectResponse
      */
@@ -266,6 +258,8 @@ class ServerController extends Controller
     }
 
     /**
+     * List servers for DataTable.
+     *
      * @return JsonResponse|mixed
      *
      * @throws Exception

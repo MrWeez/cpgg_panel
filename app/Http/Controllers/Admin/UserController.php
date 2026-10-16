@@ -61,7 +61,7 @@ class UserController extends Controller
     }
 
     /**
-     * Display a listing of the resource.
+     * List users.
      *
      * @param  Request  $request
      * @return Application|Factory|View|Response
@@ -80,7 +80,7 @@ class UserController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Show user.
      *
      * @param  User  $user
      * @return Application|Factory|View|Response
@@ -179,7 +179,7 @@ class UserController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Show edit form.
      *
      * @param  User  $user
      * @return Application|Factory|View|Response
@@ -199,7 +199,7 @@ class UserController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update user.
      *
      * @param  Request  $request
      * @param  User  $user
@@ -241,7 +241,6 @@ class UserController extends Controller
             ]);
         }
 
-        //update roles
         if ($request->roles && $this->can(self::CHANGE_ROLE_PERMISSION)) {
             $collectedRoles = collect($request->roles)->map(fn($val) => (int) $val);
             $user->syncRoles($collectedRoles);
@@ -280,7 +279,6 @@ class UserController extends Controller
         }
 
 
-        // Update password separately with validation, if permission is granted
         if (!is_null($request->input('new_password')) && $this->canAny([self::CHANGE_PASSWORD_PERMISSION, self::WRITE_PERMISSION])) {
             $request->validate([
                 'new_password' => 'required|string|min:8',
@@ -290,7 +288,6 @@ class UserController extends Controller
             $dataArray['password'] = Hash::make($request->input('new_password'));
         }
 
-        // Only update with the collected data
         if (!empty($dataArray)) {
             $user->update($dataArray);
 
@@ -318,7 +315,7 @@ class UserController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete user.
      *
      * @param  User  $user
      * @return RedirectResponse
@@ -337,7 +334,7 @@ class UserController extends Controller
     }
 
     /**
-     * Verifys the users email
+     * Verify email.
      *
      * @param  User  $user
      * @return RedirectResponse
@@ -355,6 +352,8 @@ class UserController extends Controller
     }
 
     /**
+     * Impersonate user.
+     *
      * @param  Request  $request
      * @param  User  $user
      * @return RedirectResponse
@@ -370,6 +369,8 @@ class UserController extends Controller
     }
 
     /**
+     * End impersonation.
+     *
      * @param  Request  $request
      * @return RedirectResponse
      */
@@ -387,7 +388,7 @@ class UserController extends Controller
     }
 
     /**
-     * Show the form for seding notifications to the specified resource.
+     * Show notify form.
      *
      * @param  User  $user
      * @return Application|Factory|View|Response
@@ -402,7 +403,7 @@ class UserController extends Controller
     }
 
     /**
-     * Notify the specified resource.
+     * Send notification.
      *
      * @param  Request  $request
      * @param  User  $user
@@ -426,7 +427,6 @@ class UserController extends Controller
             'content' => 'required|string|min:1',
         ]);
 
-        // Ensure at least one target (all users, specific users, or roles) is selected.
         $hasTarget = $data['all'] ?? false
             || !empty($data['users'])
             || !empty($data['roles']);
@@ -453,20 +453,16 @@ class UserController extends Controller
         if (!$roles) {
             $users = $all ? User::where('suspended', false)->get() : User::whereIn('id', $data['users'])->get();
         } else {
-            // Initialize an empty collection to hold users from all roles
             $users = collect();
 
-            // Loop through each role ID and fetch users
             foreach ($data["roles"] as $roleId) {
                 $roleUsers = User::whereHas('roles', function ($query) use ($roleId) {
                     $query->where('id', $roleId);
                 })->get();
 
-                // Merge users from this role into the main collection
                 $users = $users->merge($roleUsers);
             }
 
-            // Remove duplicate users (if any)
             $users = $users->unique('id');
         }
 
@@ -485,6 +481,8 @@ class UserController extends Controller
     }
 
     /**
+     * Toggle suspension.
+     *
      * @param  User  $user
      * @return RedirectResponse
      */
@@ -506,6 +504,8 @@ class UserController extends Controller
     }
 
     /**
+     * List users for DataTable.
+     *
      * @throws Exception
      */
     public function dataTable(Request $request)

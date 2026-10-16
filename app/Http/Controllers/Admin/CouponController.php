@@ -18,7 +18,7 @@ class CouponController extends Controller
     use CouponTrait;
 
     /**
-     * Display a listing of the resource.
+     * List coupons.
      *
      * @return \Illuminate\Http\Response
      */
@@ -32,7 +32,7 @@ class CouponController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show coupon create form.
      *
      * @return \Illuminate\Http\Response
      */
@@ -44,7 +44,7 @@ class CouponController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store new coupon.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
@@ -57,7 +57,7 @@ class CouponController extends Controller
         $random_codes_amount = $request->input('range_codes');
         $rules = $this->requestRules($request);
 
-        // If for some reason you pass both fields at once.
+        // Both code inputs set, pick one.
         if ($coupon_code && $random_codes_amount) {
             return redirect()->back()->with('error', __('Only one of the two code inputs must be provided.'))->withInput($request->all());
         }
@@ -78,7 +78,7 @@ class CouponController extends Controller
             }
             $min_product_price = $currencyHelper->prepareForDatabase($request->input('min_product_price'));
 
-            // Scroll through all the randomly generated coupons.
+            // insert() skips timestamps, set manually.
             foreach ($coupons as $coupon) {
                 $data[] = [
                     'code' => $coupon,
@@ -88,7 +88,7 @@ class CouponController extends Controller
                     'max_uses' => $request->input('max_uses'),
                     'max_uses_per_user' => $this->normalizeMaxUsesPerUser($request),
                     'expires_at' => $request->input('expires_at'),
-                    'created_at' => Carbon::now(), // Does not fill in by itself when using the 'insert' method.
+                    'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now()
                 ];
             }
@@ -102,19 +102,13 @@ class CouponController extends Controller
         return redirect()->route('admin.coupons.index')->with('success', __("The coupon's was registered successfully."));
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Coupon  $coupon
-     * @return \Illuminate\Http\Response
-     */
     public function show(Coupon $coupon)
     {
         //
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Show coupon edit form.
      *
      * @param  \App\Models\Coupon  $coupon
      * @return \Illuminate\Http\Response
@@ -130,7 +124,7 @@ class CouponController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update coupon.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \App\Models\Coupon  $coupon

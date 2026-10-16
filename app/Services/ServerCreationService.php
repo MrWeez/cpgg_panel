@@ -130,22 +130,19 @@ class ServerCreationService
 
     private function validateAndPrepare(User $user, Product $product, mixed $data): mixed
     {
-        // Check if user has reached server limit.
         $currentUserServersCount = $user->servers()->count();
 
         if ($currentUserServersCount >= $user->server_limit) {
             throw new ServerLimitReachedException('Server limit reached for this product.');
         }
 
-        // Check if user has reached product specific server limit.
         $userProductServersCount = $user->servers()->where("product_id", $product->id)->count();
 
         if ($product->serverlimit > 0 && $userProductServersCount >= $product->serverlimit) {
             throw new ServerLimitReachedException('Server limit reached for this user and product combination.');
         }
 
-        // Check if user has enough credits to create the server.
-        // if the column is null or smaller than price, treat price as minimum
+        // Null or below price means price is minimum.
         $minCredits = ($product->minimum_credits === null || $product->minimum_credits < $product->price)
             ? $product->price
             : $product->minimum_credits;
@@ -159,7 +156,6 @@ class ServerCreationService
             );
         }
 
-        // General checks for user.
         if (!$user->hasVerifiedEmail() && $this->userSettings->force_email_verification) {
             throw new ServerCreationException('User must verify their email before creating a server.', 422);
         }
@@ -172,7 +168,6 @@ class ServerCreationService
             throw new ServerCreationException('Server creation is currently disabled.', 422);
         }
 
-        // Check if the product is available in the user's location.
         $availableNode = $this->findAvailableNode($data['location_id'], $product);
 
         if (!$availableNode) {
@@ -310,12 +305,10 @@ class ServerCreationService
             ->get();
 
         $availableNodes = $nodes->reject(function ($node) use ($product) {
-            // Check if node has enough memory and disk resources
             if (!$this->pterodactylClient->checkNodeResources($node, $product->memory, $product->disk)) {
                 return true;
             }
 
-            // Check if node has reached its per-node allocation limit.
             if ($this->pterodactylClient->nodeHasReachedAllocationLimit($node)) {
                 return true;
             }
@@ -344,11 +337,9 @@ class ServerCreationService
                 return true;
             }
 
-            // Check if node has reached its per-node allocation limit.
             return $this->pterodactylClient->nodeHasReachedAllocationLimit($node);
         });
 
-        // Try each available node and return the first one with a free allocation.
         foreach ($availableNodes as $node) {
             try {
                 $allocationId = $this->pterodactylClient->getFreeAllocationId($node);

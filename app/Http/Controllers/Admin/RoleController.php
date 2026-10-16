@@ -22,7 +22,7 @@ class RoleController extends Controller
     const EDIT_PERMISSION = "admin.roles.edit";
     const DELETE_PERMISSION = "admin.roles.delete";
     /**
-     * Display a listing of the resource.
+     * List roles.
      *
      * @param Request $request
      * @return mixed
@@ -34,7 +34,6 @@ class RoleController extends Controller
         $allConstants = (new \ReflectionClass(__CLASS__))->getConstants();
         $this->checkAnyPermission($allConstants);
 
-        //datatables
         if ($request->ajax()) {
             return $this->dataTableQuery();
         }
@@ -44,7 +43,7 @@ class RoleController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show create form.
      *
      * @return Application|Factory|View
      */
@@ -58,7 +57,7 @@ class RoleController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store role.
      *
      * @return RedirectResponse
      */
@@ -83,7 +82,7 @@ class RoleController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Show role.
      */
     public function show()
     {
@@ -91,7 +90,7 @@ class RoleController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Show edit form.
      *
      * @param Role $role
      * @return Application|Factory|View
@@ -110,7 +109,7 @@ class RoleController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update role.
      *
      * @param Role $role
      * @return RedirectResponse
@@ -154,7 +153,7 @@ class RoleController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete role.
      *
      * @return RedirectResponse
      */
@@ -181,6 +180,8 @@ class RoleController extends Controller
     }
 
     /**
+     * List roles for DataTable.
+     *
      * @return mixed
      * @throws Exception
      */

@@ -132,7 +132,7 @@ class SettingsController extends Controller
     }
 
     /**
-     * Display a listing of the resource.
+     * Show settings overview.
      *
      * @return Application|Factory|View|Response
      */
@@ -149,18 +149,15 @@ class SettingsController extends Controller
         foreach ($settingsFiles as $file) {
 
             $className = $file;
-            // instantiate the class and call toArray method to get all options
             $settingsInstance = new $className();
             $options = $settingsInstance->toArray();
 
-            // call getOptionInputData method to get all options
             if (method_exists($className, 'getOptionInputData')) {
                 $optionInputData = $className::getOptionInputData();
             } else {
                 $optionInputData = [];
             }
 
-            // collect all option input data
             $optionsData = [];
             $sectionDefinitions = $optionInputData['sections'] ?? [];
             $categoryName = str_replace('Settings', '', class_basename($className));
@@ -267,15 +264,10 @@ class SettingsController extends Controller
     }
 
     /**
-     * Group option fields into sections.
+     * Group options into sections.
      *
-     * Each option can declare the section it belongs to via the "section" key.
-     * Section metadata (label + description) is defined once under the
-     * "sections" key of getOptionInputData(). Sections are rendered in the
-     * order they are first referenced by an option, followed by any declared
-     * sections that were not used. Options without a section are placed in a
-     * leading section titled with the page name, so every settings page is
-     * rendered uniformly with a header.
+     * Order follows first use, then unused definitions.
+     * Ungrouped options go to a leading default section.
      *
      * @param array<string, array<string, mixed>> $optionsData
      * @param array<string, array<string, string>> $sectionDefinitions

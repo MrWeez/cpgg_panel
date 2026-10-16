@@ -112,7 +112,6 @@ class ServerUpgradeService
             $pterodactylServerNodeId = $pterodactylServer['relationships']['node']['attributes']['id'];
             $node = Node::findOrFail($pterodactylServerNodeId);
 
-            // Check if the new product can be applied to the server.
             $requiredMemory = $product->memory - $oldProduct->memory;
             $requiredDisk = $product->disk - $oldProduct->disk;
 

@@ -16,7 +16,7 @@ class ActivityLogController extends Controller
 {
     const VIEW_PERMISSION = "admin.logs.read";
     /**
-     * Display a listing of the resource.
+     * List activity logs with search.
      *
      * @return Application|Factory|View|Response
      */
@@ -30,11 +30,9 @@ class ActivityLogController extends Controller
         if ($request->input('search')) {
             $searchTerm = $request->input('search');
 
-            // Pre-fetch logs and decode JSON properties
             $logs = Activity::all()->filter(function ($log) use ($searchTerm) {
                 $properties = json_decode($log->properties, true);
 
-                // Check if search term exists in attributes or old values
                 $attributesMatch = isset($properties['attributes']) &&
                     collect($properties['attributes'])->contains(fn($value) => str_contains(strtolower($value), strtolower($searchTerm)));
 
@@ -46,7 +44,6 @@ class ActivityLogController extends Controller
                     $attributesMatch || $oldMatch;
             });
 
-            // Paginate manually
             $perPage = 20;
             $currentPage = LengthAwarePaginator::resolveCurrentPage();
             $currentItems = $logs->slice(($currentPage - 1) * $perPage, $perPage);
@@ -69,18 +66,13 @@ class ActivityLogController extends Controller
 
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return Response
-     */
     public function create()
     {
         //
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Blocked, logs are read-only.
      *
      * @param  Request  $request
      * @return Response
@@ -90,30 +82,18 @@ class ActivityLogController extends Controller
         abort(403, __('User does not have the right permissions.'));
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return Response
-     */
     public function show($id)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return Response
-     */
     public function edit($id)
     {
         //
     }
 
     /**
-     * Update the specified resource in storage.
+     * Blocked, logs are read-only.
      *
      * @param  Request  $request
      * @param  int  $id
@@ -124,12 +104,6 @@ class ActivityLogController extends Controller
         abort(403, __('User does not have the right permissions.'));
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return Response
-     */
     public function destroy($id)
     {
         //
